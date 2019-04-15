@@ -8,8 +8,8 @@ h1, h2, h3, h4, h5, h6 {
   color: #444444;
 }
 
-.bg-steel {
-  background-color: #5f788a;
+.bg-info {
+  background-color: #401f54;
 }
 
 .site-header .navbar-nav .nav-link {
@@ -46,8 +46,8 @@ a.article-title:hover {
 }
 
 .article-img {
-  height: 65px;
-  width: 65px;
+  height: 40px;
+  width: 40px;
   margin-right: 16px;
 }
 

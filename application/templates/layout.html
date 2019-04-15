@@ -7,7 +7,6 @@
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main.css') }}">
 
     {% if title %}
@@ -18,7 +17,7 @@
 </head>
 <body>
     <header class="site-header">
-      <nav class="navbar navbar-expand-md navbar-dark bg-steel fixed-top">
+      <nav class="navbar navbar-expand-md navbar-dark bg-info fixed-top">
         <div class="container">
           <a class="navbar-brand mr-4" href="/">AnswersGrid</a>
           <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggle" aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,11 +30,12 @@
             </div>
             <form class="form-inline my-2 my-lg-0">
               <input class="form-control mr-sm-2 search-box" type="search" placeholder="Search your question :(" aria-label="Search">
-              <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+              <button class="btn my-2 my-sm-0 bg-dark text-white" type="submit">Search</button>
              </form>
             <!-- Navbar Right Side -->
             <div class="navbar-nav">
               {%  if current_user.is_authenticated %}
+              <a class="nav-item nav-link" href="{{ url_for('new_post') }}">Ask Question</a>
               <a class="nav-item nav-link" href="{{ url_for('account') }}">Account</a>
               <a class="nav-item nav-link" href="{{ url_for('logout') }}">Logout</a>
               {% else  %}
