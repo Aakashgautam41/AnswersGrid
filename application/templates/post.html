@@ -2,21 +2,24 @@
 {% block content %}
 
     <article class="media content-section">
-      <img class="rounded-circle article-img" src="{{ url_for('static', filename='profile_pics/' + post.author.image_file) }}">
       <div class="media-body">
         <div class="article-metadata">
+          <img class="rounded-circle article-img" src="{{ url_for('static', filename='profile_pics/' + post.author.image_file) }}">
           <a class="mr-2" href="{{ url_for('user_posts', username=post.author.username) }}">{{ post.author.username }}</a>
           <small class="text-muted">{{ post.date_posted.strftime('%d-%m-%Y') }}</small>
           {% if post.author == current_user  %}
-            <div>
-              <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('update_post', post_id=post.id)  }}">Edit</a>
-              <button type="button" class="btn btn-danger btn-sm m-1" data-toggle="modal" data-target="#deleteModal">Delete</button>
-            </div>
+              <a class="btn btn-secondary btn-sm mt-1 mb-1 edit-btn" href="{{ url_for('update_post', post_id=post.id)  }}">Edit</a>
+              <button type="button" class="btn btn-danger btn-sm m-1 delete-btn" data-toggle="modal" data-target="#deleteModal">Delete</button>
+
           {% endif %}
         </div>
         <h4 class="article-title">{{ post.title }}</h4>
         <p class="article-content">{{ post.content }}</p>
-        <p><a class="article-content" href="#">{{ post.tags }}</a></p>
+        <p><a class="article-content" href="#">{{ post.tags }}</a></p><hr>
+        <a href="{{ url_for('upvote', post_id=post.id, user_id=current_user.id) }}" class="text-dark"><i class="fas fa-thumbs-up mr-4 btn text-dark"></i></a>
+        <a href="{{ url_for('upvote', post_id=post.id, user_id=current_user.id) }}" class="text-dark"><i class="fas fa-thumbs-down mr-4 btn"></i></a>
+        <a href="{{url_for('comment_post', post_id=post.id)}}" class="text-dark"><i class="fas fa-comment-alt mr-4 btn"></i></a>
+        <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-show-count="false"></a>
       </div>
     </article>
     <!-- Modal -->

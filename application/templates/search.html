@@ -1,0 +1,40 @@
+{% extends "layout.html" %}
+{% block content %}
+   {% for post in searched_posts.items %}
+       {% if post in searched_posts.items %}
+           <article class="media content-section">
+              <div class="media-body">
+                <div class="article-metadata">
+                  <img class="rounded-circle article-img" src="{{ url_for('static', filename='profile_pics/' + post.author.image_file) }}">
+                  <a class="mr-2" href="{{ url_for('user_posts', username=post.author.username) }}">{{ post.author.username }}</a>
+                  <small class="text-muted">{{ post.date_posted.strftime('%d-%m-%Y') }}</small>
+                  {% if post.author == current_user  %}
+
+                      <a class="btn btn-secondary btn-sm mt-1 mb-1 edit-btn" href="{{ url_for('update_post', post_id=post.id)  }}">Edit</a>
+                      <button type="button" class="btn btn-danger btn-sm m-1 delete-btn" data-toggle="modal" data-target="#deleteModal">Delete</button>
+
+                  {% endif %}
+                </div>
+                <h4 class="article-title">{{ post.title }}</h4>
+                <p class="article-content">{{ post.content }}</p>
+                <p><a class="article-content" href="#">{{ post.tags }}</a></p>
+              </div>
+            </article>
+        {% endif %}
+        {% else %}
+            <h4 class="article-title">Sorry! No results matched :( </h4>
+    {% endfor %}
+
+    {% for page_num in searched_posts.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+      {% if page_num %}
+        {% if searched_posts.page == page_num %}
+          <a class="btn btn-info mb-4" href="{{ url_for('search', page=page_num) }}">{{ page_num }}</a>
+        {% else %}
+          <a class="btn btn-outline-info mb-4" href="{{ url_for('search', page=page_num) }}">{{ page_num }}</a>
+        {% endif %}
+      {% else %}
+      ...
+      {% endif %}
+    {% endfor %}
+
+{% endblock content %}

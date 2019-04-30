@@ -64,6 +64,14 @@ class PostForm(FlaskForm):
 
 
 
+class CommentForm(FlaskForm):
+    comment = TextAreaField(validators=[DataRequired()])
+    submit = SubmitField('Comment')
+
+
+class SearchForm(FlaskForm):
+    search_content = StringField()
+    search = SubmitField()
 
 
 
