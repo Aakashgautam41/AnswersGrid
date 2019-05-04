@@ -1,7 +1,7 @@
 from flask import render_template, url_for, flash, redirect, request, abort, jsonify
 from application import app, db, bcrypt
 from application.forms import RegistrationForm, LoginForm, UpdateAccountForm, PostForm, CommentForm, SearchForm
-from application.models import User, Post, Comment, Vote, Tags, tagposts
+from application.models import User, Post, Comment, Vote, Downvote, Tags, tagposts
 from flask_login import login_user, current_user, logout_user, login_required
 import secrets
 import os
@@ -32,11 +32,20 @@ def about():
 
 @app.route("/getdata")
 def getdata():
-    posts = Post.query.order_by(Post.date_posted.desc())
-    for post in posts:
-        like_count = post.like_count
-        print(like_count)
-    return jsonify({'data' :render_template("data.html", posts=posts)})
+    posts = ['a','b','c']
+    # tags = [('73', 'Flask'),('70', 'Jquery'),('69', 'Python'),('72', 'Python'),('71', 'SQLAlchemy')]
+    x = Tags.query.order_by(Tags.tag_title).all()
+
+    z=[]
+    
+    for y in x:
+        z.append(str(y.tag_title))
+    print(z)
+     
+
+    return jsonify(z)
+
+    # return jsonify({'data' :render_template("data.html", posts=posts)})
 
 
 @app.route("/register", methods=['GET', 'POST'])
@@ -158,16 +167,21 @@ def update_post(post_id):
     tagpost = tagposts.query.filter_by(post_id=post_id).first_or_404()
     tagId = tagpost.tag_id
     tag = Tags.query.filter_by(tag_id=tagId).first_or_404()
+    
+    # If post author is not current user then abort
     if post.author != current_user:
         abort(403)
+    # Else if current user is author then import the form
     form = PostForm()
+    # Update post if form is valid
     if form.validate_on_submit():
         post.title = form.title.data
         post.content = form.content.data
-        post.tags = form.tags.data
+        tag.tag_title = form.tags.data
         db.session.commit()
         flash('Your question has been updated', 'success')
         return redirect(url_for('post', post_id=post_id))
+    # Populate form with current post data
     elif request.method == 'GET':
         form.title.data = post.title
         form.content.data = post.content
@@ -274,6 +288,54 @@ def upvote(post_id,user_id):
 
     return redirect("/home")
 
+@app.route('/downvote/<int:post_id>/<int:user_id>')
+@login_required
+def downvote(post_id,user_id):
+    posts = Post.query.get_or_404(post_id)
+
+    # Check if entry is already present in the table
+    post_present = db.session.query(db.exists().where(and_(Downvote.post_id == post_id, Downvote.user_id == user_id))).scalar()
+
+    if post_present == True:
+        print("All ready downvoted")
+        print(post_id)
+        print(user_id)
+        print(post_present)
+
+        # If YES, Delete the entry
+        Downvote.query.filter_by(post_id=post_id, user_id=user_id).delete()
+        db.session.commit()
+        flash("Your downvote has been removed !!","success")
+
+        # Count all entries on that post
+        DownvoteCount = db.session.query(Downvote).filter(Downvote.post_id == post_id).count()
+        posts.dislike_count = DownvoteCount
+        db.session.commit()
+        print(db.session.query(Downvote).filter(Downvote.post_id == post_id).count())
+        print(posts.dislike_count)
+        print(posts)
+
+    # If entry is not already present in the table
+    else:
+        # Then add entry in the table
+        downvote = Downvote(user_id=user_id, post_id=post_id)
+        downvote.action = "disliked"
+        db.session.add(downvote)
+        db.session.commit()
+        flash("You have disliked the post","success")
+        print(post_present)
+
+        # Count all entries on that post
+        downvoteCount = db.session.query(Downvote).filter(Downvote.post_id == post_id).count()
+        posts.dislike_count = downvoteCount
+        db.session.commit()
+        print(db.session.query(Downvote).filter(Downvote.post_id == post_id).count())
+        print(posts.dislike_count)
+        print(posts)
+
+    return redirect("/home")
+
+
 
 @app.route('/tags/<tag_title>')
 def tags(tag_title):
@@ -283,7 +345,7 @@ def tags(tag_title):
 
     # Join tables (tagposts, Tags and Post) to get tags for each post
     joinedTables = db.session.query(tagposts.post_id,tagposts.tag_id,Tags.tag_title,Post.title,Post.user_id,Post.like_count,Post.content,Post.id,Post.author,Post.date_posted,User.username,User.image_file).join(Tags).join(Post).join(User).all()
-    print(joinedTables)
+    # print(joinedTables)
 
     for item in joinedTables:
         if tag_title in item.tag_title:

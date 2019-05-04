@@ -16,7 +16,7 @@
             <div class="footRow">
             {%  if current_user.is_authenticated %}
             <a href="{{ url_for('upvote', post_id=item.id, user_id=current_user.id) }}"><i class="fas fa-thumbs-up mr-1 btn text-primary upvote"><span class="ml-2 likes-count">{{ item.like_count }}</span></i></a>
-            <a href="{{ url_for('upvote', post_id=item.id, user_id=current_user.id) }}"><i class="fas fa-thumbs-down mr-1 btn text-dark"><span id="demo" class="ml-3">{{ item.like_count }}</i></a>
+            <a href="{{ url_for('downvote', post_id=item.id, user_id=current_user.id) }}"><i class="fas fa-thumbs-down mr-1 btn text-dark"><span id="demo" class="ml-3">{{ item.like_count }}</i></a>
             <a href="{{url_for('comment_post', post_id=item.id)}}"><i class="fas fa-comment-alt mr-1 btn text-dark"></i></a>
             {% else %}
             <a href="#"><i class="fas fa-thumbs-up mr-1 btn text-primary upvote"><span class="ml-2 likes-count">{{ item.like_count }}</span></i></a>

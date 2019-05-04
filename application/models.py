@@ -26,6 +26,7 @@ class Post(db.Model):
     content = db.Column(db.Text, nullable=False)
     date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     like_count = db.Column(db.Integer, nullable=False, default=0)
+    dislike_count = db.Column(db.Integer, nullable=False, default=0)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     comments = db.relationship('Comment', backref='commentOnPost', lazy=True)
 
@@ -51,6 +52,15 @@ class Vote(db.Model):
 
     def __repr__(self):
         return f"Vote('{self.user_id}', '{self.post_id}', '{self.action}')"
+
+class Downvote(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer,nullable=False)
+    post_id = db.Column(db.Integer,nullable=False)
+    action = db.Column(db.String,nullable=False)
+
+    def __repr__(self):
+        return f"Downvote('{self.user_id}', '{self.post_id}', '{self.action}')"
 
 
 class Tags(db.Model):

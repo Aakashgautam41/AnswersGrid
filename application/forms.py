@@ -57,15 +57,15 @@ class UpdateAccountForm(FlaskForm):
 
 
 class PostForm(FlaskForm):
-    title = StringField('Title', validators=[DataRequired()])
-    content = TextAreaField('Content', validators=[DataRequired()])
-    tags = StringField('Tags', validators=[DataRequired()])
+    title = StringField('Title', validators=[DataRequired(), Length(min=2, max=100)])
+    content = TextAreaField('Content', validators=[DataRequired(), Length(min=2, max=500)])
+    tags = StringField('Tags', validators=[DataRequired(), Length(min=2, max=20)])
     submit = SubmitField('Post')
 
 
 
 class CommentForm(FlaskForm):
-    comment = TextAreaField(validators=[DataRequired()])
+    comment = TextAreaField(validators=[DataRequired(), Length(min=1, max=500)])
     submit = SubmitField('Comment')
 
 
