@@ -10,6 +10,7 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main.css') }}">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
     <link href="https://fonts.googleapis.com/css?family=Raleway|Roboto|Ubuntu" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
     {% if title %}
         <title>AnswersGrid - {{ title }}</title>
     {% else %}
@@ -40,6 +41,9 @@
       border-radius: .25rem;
       transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
   }
+  .navbar{
+    background-color: #18a6d1;
+  }
   .search-btn{
     height: 2.2rem;
   }
@@ -69,18 +73,36 @@
   }
   .tag-style{
     margin-right: 3px;
+    /* border: 1px solid green; */
+    padding: 5px 7px;
+    border-radius: 50px;
+    color: white;
+    background-color: #0e90d2;
   }
   @media screen and (max-width: 992px) {
     #content{
     height: 100px;
       }
   }
+  
+  a:hover {
+  text-decoration: none;
+}
+ 
+  a.morelink {
+  	text-decoration:none;
+  	outline: none;
+  }
+  .morecontent span {
+  	display: none;
+  }
 
     </style>
+
 </head>
 <body>
     <header class="site-header">
-      <nav class="navbar navbar-expand-md navbar-dark bg-info fixed-top">
+      <nav class="navbar navbar-expand-md navbar-dark fixed-top">
         <div class="container">
           <a class="navbar-brand mr-4" href="/">AnswersGrid</a>
           <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggle" aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
@@ -92,7 +114,7 @@
               <a class="nav-item nav-link" href="{{ url_for('about') }}">About</a>
             </div>
             <form method="POST" action="/search" class="form-inline my-2 my-lg-0 form-group">
-              <input class="form-control mr-sm-2 search-box" type="search" placeholder="Search your question :(" name="search" aria-label="Search">
+              <input class="form-control mr-sm-2 search-box" type="search" placeholder="Search your question :/" name="search" aria-label="Search">
               <button class="btn bg-secondary text-white" type="submit">Search</button>
              </form>
             <!-- Navbar Right Side -->
@@ -144,12 +166,47 @@
 
 
     <!-- Optional JavaScript -->
+
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
     <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+    <script>
 
+          $(document).ready(function() {
+          	var showChar = 400;
+          	var moretext = "more";
+          	var lesstext = "less";
+          	var ellipsesText = " ...";
+          	$('.more').each(function() {
+          		var content = $(this).html();
+
+          		if(content.length > showChar) {
+
+          			var c = content.substr(0, showChar);
+          			var h = content.substr(showChar-1, content.length - showChar);
+
+          			var html = c + '<span class="moreellipses">' + ellipsesText + '&nbsp;</span><span class="morecontent"><span>' + h + '</span>&nbsp;&nbsp;<a href="" class="morelink">' + moretext + '</a></span>';
+          			$(this).html(html);
+          		}
+
+          	});
+
+          	$(".morelink").click(function(){
+          		if($(this).hasClass("less")) {
+          			$(this).removeClass("less");
+          			$(this).html(moretext);
+          		} else {
+          			$(this).addClass("less");
+          			$(this).html(lesstext);
+          		}
+          		$(this).parent().prev().toggle();
+          		$(this).prev().toggle();
+          		return false;
+          	});
+          });
+    </script>
 
 </body>
 </html>

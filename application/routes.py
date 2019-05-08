@@ -1,6 +1,6 @@
 from flask import render_template, url_for, flash, redirect, request, abort, jsonify
-from application import app, db, bcrypt
-from application.forms import RegistrationForm, LoginForm, UpdateAccountForm, PostForm, CommentForm, SearchForm
+from application import app, db, bcrypt, mail
+from application.forms import RegistrationForm, LoginForm, UpdateAccountForm, PostForm, CommentForm, RequestResetForm, ResetPasswordForm
 from application.models import User, Post, Comment, Vote, Downvote, Tags, tagposts
 from flask_login import login_user, current_user, logout_user, login_required
 import secrets
@@ -10,6 +10,7 @@ from sqlalchemy.sql import exists
 from sqlalchemy import func
 from sqlalchemy import and_
 from sqlalchemy import create_engine
+from flask_mail import Message
 
 
 @app.route("/")
@@ -23,6 +24,7 @@ def home():
     joinedTables = db.session.query(tagposts.post_id,tagposts.tag_id,Tags.tag_title,Post.title,Post.user_id,Post.like_count,Post.content).join(Tags).join(Post).all()
     # print(joinedTables)
 
+
     return render_template('home.html', posts=posts, voted=voted, joinedTables=joinedTables)
 
 
@@ -30,20 +32,62 @@ def home():
 def about():
     return render_template('about.html', title='About')
 
-@app.route("/getdata")
-def getdata():
-    posts = ['a','b','c']
+
+@app.route("/getdata/<int:post_id>/<int:user_id>")
+def getdata(post_id,user_id):
     # tags = [('73', 'Flask'),('70', 'Jquery'),('69', 'Python'),('72', 'Python'),('71', 'SQLAlchemy')]
-    x = Tags.query.order_by(Tags.tag_title).all()
+    # x = Tags.query.order_by(Tags.tag_title).all()
+    # z=[]
 
-    z=[]
-    
-    for y in x:
-        z.append(str(y.tag_title))
-    print(z)
-     
+    # for y in x:
+    #     z.append(str(y.tag_title))
+    # print(z)
+    # return jsonify(z)
 
-    return jsonify(z)
+    posts = Post.query.order_by(Post.date_posted.desc())
+
+     # Check if entry is already present in the table
+    post_present = db.session.query(db.exists().where(and_(Vote.post_id == post_id, Vote.user_id == user_id))).scalar()
+
+    if post_present == True:
+        print("All ready upvoted")
+        print(post_id)
+        print(user_id)
+        print(post_present)
+
+        # If YES, Delete the entry
+        Vote.query.filter_by(post_id=post_id, user_id=user_id).delete()
+        Vote.action = "not-liked"
+        db.session.commit()
+        flash("Your vote has been removed.","success")
+
+        # Count all entries on that post
+        upvoteCount = db.session.query(Vote).filter(Vote.post_id == post_id).count()
+        posts.like_count = upvoteCount
+        db.session.commit()
+        print(db.session.query(Vote).filter(Vote.post_id == post_id).count())
+        print(posts.like_count)
+        print(posts)
+        return jsonify(db.session.query(Vote).filter(Vote.post_id == post_id).count())
+
+    # If entry is not already present in the table
+    else:
+        # Then add entry in the table
+        vote = Vote(user_id=user_id, post_id=post_id)
+        vote.action = "liked"
+        db.session.add(vote)
+        db.session.commit()
+        flash("Your vote has been registered.","success")
+        print(post_present)
+
+        # Count all entries on that post
+        upvoteCount = db.session.query(Vote).filter(Vote.post_id == post_id).count()
+        posts.like_count = upvoteCount
+        db.session.commit()
+        print(db.session.query(Vote).filter(Vote.post_id == post_id).count())
+        print(posts.like_count)
+        print(posts)
+        return jsonify(db.session.query(Vote).filter(Vote.post_id == post_id).count())
 
     # return jsonify({'data' :render_template("data.html", posts=posts)})
 
@@ -87,6 +131,55 @@ def logout():
     logout_user()
     return redirect(url_for('home'))
 
+def send_reset_email(user):
+    token = user.get_reset_token()
+    msg = Message('Password Reset Request',
+                  sender='noreply@demo.com',
+                  recipients=[user.email])
+    msg.body = f'''To reset your password, visit the following link:
+{url_for('reset_token', token=token, _external=True)}
+If you did not make this request then simply ignore this email and no changes will be made.
+'''
+    mail.send(msg)
+
+@app.route("/reset_password", methods=['GET', 'POST'])
+def reset_request():
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+    form = RequestResetForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        send_reset_email(user)
+        flash('An email has been sent with instructions to reset your password.', 'info')
+        return redirect(url_for('login'))
+    return render_template('reset_request.html', title='Reset Password', form=form)
+
+
+@app.route("/reset_password/<token>", methods=['GET', 'POST'])
+def reset_token(token):
+    if current_user.is_authenticated:
+            return redirect(url_for('home'))
+    user = User.verify_reset_token(token)
+    if user is None:
+        flash('Invalid or Expired Token', 'warning')
+        return redirect(url_for('reset_request'))
+    form = ResetPasswordForm()
+    if form.validate_on_submit():
+        hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+        user.password = hashed_password
+        db.session.commit()
+        flash('Your password has been updated', 'success')
+        return redirect(url_for('login'))
+    return render_template('reset_token.html', title='Reset Passwords', form=form)
+
+
+
+
+
+
+
+
+
 def save_picture(form_picture):
     random_hex = secrets.token_hex(8)
     _, f_ext = os.path.splitext(form_picture.filename)
@@ -99,7 +192,6 @@ def save_picture(form_picture):
     i.save(picture_path)
 
     # form_picture.save(picture_path)
-
     return picture_fn
 
 @app.route("/account", methods=['GET', 'POST'])
@@ -167,7 +259,7 @@ def update_post(post_id):
     tagpost = tagposts.query.filter_by(post_id=post_id).first_or_404()
     tagId = tagpost.tag_id
     tag = Tags.query.filter_by(tag_id=tagId).first_or_404()
-    
+
     # If post author is not current user then abort
     if post.author != current_user:
         abort(403)
@@ -258,7 +350,7 @@ def upvote(post_id,user_id):
         Vote.query.filter_by(post_id=post_id, user_id=user_id).delete()
         Vote.action = "not-liked"
         db.session.commit()
-        flash("Your vote has been removed.","success")
+        # flash("Your vote has been removed.","success")
 
         # Count all entries on that post
         upvoteCount = db.session.query(Vote).filter(Vote.post_id == post_id).count()
@@ -267,6 +359,7 @@ def upvote(post_id,user_id):
         print(db.session.query(Vote).filter(Vote.post_id == post_id).count())
         print(posts.like_count)
         print(posts)
+        return jsonify(db.session.query(Vote).filter(Vote.post_id == post_id).count())
 
     # If entry is not already present in the table
     else:
@@ -275,7 +368,7 @@ def upvote(post_id,user_id):
         vote.action = "liked"
         db.session.add(vote)
         db.session.commit()
-        flash("Your vote has been registered.","success")
+        # flash("Your vote has been registered.","success")
         print(post_present)
 
         # Count all entries on that post
@@ -285,8 +378,8 @@ def upvote(post_id,user_id):
         print(db.session.query(Vote).filter(Vote.post_id == post_id).count())
         print(posts.like_count)
         print(posts)
+        return jsonify(db.session.query(Vote).filter(Vote.post_id == post_id).count())
 
-    return redirect("/home")
 
 @app.route('/downvote/<int:post_id>/<int:user_id>')
 @login_required
@@ -336,7 +429,6 @@ def downvote(post_id,user_id):
     return redirect("/home")
 
 
-
 @app.route('/tags/<tag_title>')
 def tags(tag_title):
     page = request.args.get('page',1,type=int)
@@ -353,6 +445,8 @@ def tags(tag_title):
 
 
             return render_template("tags.html", posts=posts, joinedTables=joinedTables, tag_title=tag_title)
+
+
 
 
 

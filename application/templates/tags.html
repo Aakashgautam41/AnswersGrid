@@ -10,8 +10,8 @@
             <div class="article-metadata">
             </div>
             <h4><a class="article-title" href="#">{{ item.title }}</a></h4>
-            <p class="article-content">{{ item.content }}</p>
-            <p><a class="article-content" href="#">{{ item.tag_title }}</a></p><hr>
+            <p class="article-content more">{{ item.content }}</p>
+            <p><a class="article-content tag-style" href="#">{{ item.tag_title }}</a></p><hr>
 
             <div class="footRow">
             {%  if current_user.is_authenticated %}

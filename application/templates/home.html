@@ -9,7 +9,7 @@
             <div class="article-metadata">
             </div>
             <h4><a class="article-title" href="{{ url_for('post', post_id=post.id) }}">{{ post.title }}</a></h4>
-            <p class="article-content">{{ post.content }}</p>
+            <p class="article-content comment more">{{ post.content }}</p>
 
             {% for tag in joinedTables %}
             {% if post.id in tag %}
@@ -19,12 +19,12 @@
            <div class="footRow">
             {%  if current_user.is_authenticated %}
 
-              <a href="{{ url_for('upvote', post_id=post.id, user_id=current_user.id) }}"><i class="fas fa-thumbs-up mr-1 btn text-primary upvote"><span class="ml-2 likes-count">{{ post.like_count }}</span></i></a>
+              <a id="/vote/{{post.id}}/{{current_user.id}}" onclick="contentDisp(this);"><i class="fas fa-thumbs-up mr-1 btn text-primary upvote"><span class="ml-2 likes-count" id="like">{{ post.like_count }}</span></i></a>
               <a href="{{ url_for('downvote', post_id=post.id, user_id=current_user.id) }}"><i class="fas fa-thumbs-down mr-1 btn text-dark"><span id="demo" class="ml-3">{{ post.dislike_count }}</i></a>
               <a href="{{url_for('comment_post', post_id=post.id)}}"><i class="fas fa-comment-alt mr-1 btn text-dark"></i></a>
               {% else %}
               <a href="{{url_for('login')}}"><i class="fas fa-thumbs-up mr-1 btn text-primary upvote"><span class="ml-2 likes-count">{{ post.like_count }}</span></i></a>
-              <a href="#"><i class="fas fa-thumbs-down mr-1 btn text-dark"><span id="demo" class="ml-3">{{ post.like_count }}</i></a>
+              <a href="{{url_for('login')}}"><i class="fas fa-thumbs-down mr-1 btn text-dark"><span id="demo" class="ml-3">{{ post.like_count }}</i></a>
               <a href="{{url_for('comment_post', post_id=post.id)}}"><i class="fas fa-comment-alt mr-1 btn text-dark"></i></a>
 
             {% endif %}
@@ -44,21 +44,33 @@
       ...
       {% endif %}
     {% endfor %}
-    <script>
-        function updateLike() {
+   <script>
+        function contentDisp(obj) {
           var xhttp = new XMLHttpRequest();
           xhttp.onreadystatechange = function() {
             if (this.readyState == 4 && this.status == 200) {
-              document.getElementById("demo").innerHTML =
+              document.getElementById("like").innerHTML =
               this.responseText;
             }
           };
-          xhttp.open("POST", "/vote/post.id/current_user.id", true);
+          var someurl = String($(obj).attr("id"));
+          xhttp.open("GET", someurl, true);
           xhttp.send();
-          alert("Earth C137");
-          console.log(post.id);
-          console.log(current_user.id);
         }
+
+
+        // function contentDisp(obj) {
+        //   var someurl = String($(obj).attr("id"));
+        //   console.log(someurl.typeof)
+        //   $.ajax({
+        //         url : someurl,
+        //         success : function (data) {
+        //           console.log(data)
+        //             $("#like").html(data);
+        //         }
+        //   });
+        // }
+
 
     </script>
 {% endblock content %}

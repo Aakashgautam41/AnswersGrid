@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block content %}
     <h1>About Page</h1>
-    <button type="button" onclick="loadDoc()">Change Content</button>
+    <button type="button" onclick="loadDoc()">Like</button>
     <div id="demo">
         {% for post in posts %}
             {{ post.like_counter }}
@@ -17,7 +17,7 @@
               this.responseText;
             }
           };
-          xhttp.open("GET", "/getdata", true);
+          xhttp.open("GET", "/getdata/101/4", true);
           xhttp.send();
         }
     </script>

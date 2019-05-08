@@ -10,7 +10,7 @@
               <small class="text-muted">{{ post.date_posted.strftime('%d-%m-%Y') }}</small>
             </div>
             <h4><a class="article-title" href="{{ url_for('post', post_id=post.id) }}">{{ post.title }}</a></h4>
-            <p class="article-content">{{ post.content }}</p>
+            <p class="article-content more">{{ post.content }}</p>
             <p><a class="article-content" href="#">{{ post.tags }}</a></p> <hr>
            
             <div class="footRow">
