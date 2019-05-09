@@ -8,12 +8,12 @@
             <small class="text-muted">{{ post.date_posted.strftime('%d-%m-%Y') }}</small>
             <div class="article-metadata">
             </div>
-            <h4><a class="article-title" href="{{ url_for('post', post_id=post.id) }}">{{ post.title }}</a></h4>
-            <p class="article-content comment more">{{ post.content }}</p>
+            <h5 class="text-justify"><a class="article-title" href="{{ url_for('post', post_id=post.id) }}">{{ post.title }}</a></h5>
+            <p class="article-content comment more text-justify text-wrap text-muted">{{ post.content|safe }}</p>
 
             {% for tag in joinedTables %}
             {% if post.id in tag %}
-            <a class="article-content tag-style" href="{{ url_for('tags', tag_title=tag.tag_title) }}">{{ tag.tag_title }}</a>
+            <a class="article-content tag-style text-justify " href="{{ url_for('tags', tag_title=tag.tag_title) }}">{{ tag.tag_title }}</a>
             {% endif %}
             {% endfor %}<hr>
            <div class="footRow">

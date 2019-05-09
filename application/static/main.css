@@ -76,6 +76,7 @@ a.article-title:hover {
 }
 
 .account-heading {
+  display: block;
   font-size: 2.5rem;
 }
 

@@ -19,6 +19,7 @@ def home():
     page = request.args.get('page',1,type=int)
     posts = Post.query.order_by(Post.date_posted.desc()).paginate(page=page, per_page=5)
     voted = Vote.query.order_by(Vote.post_id.desc())
+    a= request.form.get('editordata')
 
     # Join tables (tagposts, Tags and Post) to get tags for each post
     joinedTables = db.session.query(tagposts.post_id,tagposts.tag_id,Tags.tag_title,Post.title,Post.user_id,Post.like_count,Post.content).join(Tags).join(Post).all()
@@ -176,10 +177,6 @@ def reset_token(token):
 
 
 
-
-
-
-
 def save_picture(form_picture):
     random_hex = secrets.token_hex(8)
     _, f_ext = os.path.splitext(form_picture.filename)
@@ -219,31 +216,37 @@ def account():
 @app.route("/post/new", methods=['GET', 'POST'])
 @login_required
 def new_post():
-    form = PostForm()
-    if form.validate_on_submit():
-        post = Post(title=form.title.data, content=form.content.data, author=current_user)
+    if request.method == 'POST':
+        post = Post(title=request.form.get('title'), content=request.form.get('content'), author=current_user)
         db.session.add(post)
         db.session.commit()
 
-        tag = Tags(tag_title=form.tags.data)
-        db.session.add(tag)
-        db.session.commit()
+        # Get all tags on the post
+        many_tags = request.form.getlist('tags')
+        print(len(many_tags))
 
-        post = Post.query.order_by(Post.date_posted.desc()).first()
-        post_id = post.id
+        for one_tag in many_tags:
+            print(one_tag)
+            tag = Tags(tag_title=one_tag)
+            db.session.add(tag)
+            db.session.commit()
+        # flash("Your question has been posted","success")
 
-        tag = Tags.query.order_by(Tags.tag_id.desc()).first()
-        tag_id = tag.tag_id
-        print(post_id)
-        print(tag_id)
+        recent_post = Post.query.order_by(Post.date_posted.desc()).first()
+        post_id = recent_post.id
 
-        something = tagposts(post_id=post_id, tag_id=tag_id)
-        db.session.add(something)
-        db.session.commit()
-        flash('Your question has been posted', 'success')
+        recent_tags = Tags.query.order_by(Tags.tag_id.desc()).limit(len(many_tags)).all()
+        print(recent_tags)
 
+        for tag in recent_tags: 
+            print(tag)
+            tag_id = tag.tag_id
+            something = tagposts(post_id=post_id, tag_id=tag_id)
+            db.session.add(something)
+            db.session.commit()
 
-    return render_template('create_post.html', title='Ask Question', form=form, legend='Ask Question')
+    return render_template('create_post.html', title='Ask Question', legend='Ask Question')
+
 
 
 @app.route("/post/<int:post_id>", methods=['GET', 'POST'])
@@ -264,21 +267,18 @@ def update_post(post_id):
     if post.author != current_user:
         abort(403)
     # Else if current user is author then import the form
-    form = PostForm()
-    # Update post if form is valid
-    if form.validate_on_submit():
-        post.title = form.title.data
-        post.content = form.content.data
-        tag.tag_title = form.tags.data
+        post.title = request.form.get('title')
+        post.content = request.form.get('content')
+        tag.tag_title = request.form.getlist('tags')
         db.session.commit()
         flash('Your question has been updated', 'success')
         return redirect(url_for('post', post_id=post_id))
     # Populate form with current post data
     elif request.method == 'GET':
-        form.title.data = post.title
-        form.content.data = post.content
-        form.tags.data = tag.tag_title
-        return render_template('create_post.html', title='Update Post',form=form, legend='Edit Your Question')
+        # request.form.g  = post.title
+        # content.data = post.content
+        # tags.data = tag.tag_title
+        return render_template('create_post.html', title='Update Post', legend='Edit Your Question')
 
 
 @app.route("/post/<int:post_id>/delete", methods=['POST'])

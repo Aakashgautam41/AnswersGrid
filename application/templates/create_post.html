@@ -1,53 +1,44 @@
 {% extends "layout.html" %}
 {% block content %}
 <div class="content-section">
-        <form method="POST" action="">
-            {{ form.hidden_tag() }}
-            <fieldset class="form-group">
-                <legend class="border-bottom mb-4">{{ legend }}</legend>
-                <div class="form-group">
-                    {{ form.title.label(class="form-control-label") }}
-                    {% if form.title.errors %}
-                        {{ form.title(class="form-control form-control-lg is-invalid") }}
-                        <div class="invalid-feedback">
-                            {% for error in form.title.errors %}
-                                <span>{{ error }}</span>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        {{ form.title(class="form-control form-control-lg") }}
-                    {% endif %}
-                </div>
-                <div class="form-group">
-                    {{ form.content.label(class="form-control-label") }}
-                    {% if form.content.errors %}
-                        {{ form.content(class="form-control form-control-lg is-invalid") }}
-                        <div class="invalid-feedback">
-                            {% for error in form.content.errors %}
-                                <span>{{ error }}</span>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        {{ form.content(class="form-control form-control-lg") }}
-                    {% endif %}
-                </div>
-                <div class="form-group">
-                    {{ form.tags.label(class="form-control-label") }}
-                    {% if form.tags.errors %}
-                        {{ form.tags(class="form-control form-control-lg is-invalid") }}
-                        <div class="invalid-feedback">
-                            {% for error in form.tags.errors %}
-                                <span>{{ error }}</span>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        {{ form.tags(class="form-control form-control-lg") }}
-                    {% endif %}
-                </div>
-            </fieldset>
-            <div class="form-group">
-                {{ form.submit(class="btn btn-outline-info") }}
-            </div>
-        </form>
-    </div>
+    <form class="form-group" action="/post/new" method="POST">
+        <legend class="border-bottom mb-0">{{ legend }}</legend>
+        <label for="">Title</label>
+        <input type="text" class="form-control" id="" placeholder="" name="title">
+
+        <label for="">Content</label>
+        <textarea class="form-control" id="exampleFormControlTextarea1" rows="5" name="content"></textarea>
+
+        <label for="">Tags</label>
+        <select class="form-control js-example-tokenizer js-example-basic-multiple mt-2" style="width:100%" multiple="multiple" name="tags">
+            <option>Python</option>
+            <option>Vue Js</option>
+            <option>Flask</option>
+        </select>
+
+        <button class="btn btn-primary mt-2">Post</button>
+    </form>
+
+    <script>
+        $(document).ready(function() {
+            $('.js-example-basic-multiple').select2();
+
+            $(".js-example-responsive").select2({
+                width: 'resolve' // need to override the changed default
+            });
+
+            $(".js-example-tags").select2({
+                tags: true
+            });
+
+            $(".js-example-tokenizer").select2({
+                tags: true,
+                tokenSeparators: [',', ' ']
+            });
+        });
+        
+        console.log("Hello World !");
+       
+    </script>
+</div>
 {% endblock content %}

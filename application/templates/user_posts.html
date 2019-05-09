@@ -9,9 +9,9 @@
               <a class="mr-2" href="{{ url_for('user_posts', username=post.author.username) }}">{{ post.author.username }}</a>
               <small class="text-muted">{{ post.date_posted.strftime('%d-%m-%Y') }}</small>
             </div>
-            <h4><a class="article-title" href="{{ url_for('post', post_id=post.id) }}">{{ post.title }}</a></h4>
-            <p class="article-content more">{{ post.content }}</p>
-            <p><a class="article-content" href="#">{{ post.tags }}</a></p> <hr>
+            <h5 class=" text-justify"><a class="article-title" href="{{ url_for('post', post_id=post.id) }}">{{ post.title }}</a></h5>
+            <p class="article-content more text-justify">{{ post.content }}</p>
+            <p><a class="article-content text-justify" href="#">{{ post.tags }}</a></p> <hr>
            
             <div class="footRow">
               {%  if current_user.is_authenticated %}

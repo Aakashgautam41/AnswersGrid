@@ -3,17 +3,18 @@
 
     <div class="content-section">
       <div class="media">
-        <img class="rounded-circle account-img" src="{{ image_file }}">
-        <div class="media-body">
-          <h2 class="account-heading">{{ current_user.username }}</h2>
-          <p class="text-secondary">{{ current_user.email }}</p>
-        </div>
+        <img class="rounded-circle account-img mx-auto" src="{{ image_file }}">
+        
       </div>
+      <div class="media-body">
+            <h2 class="account-heading mx-auto">{{ current_user.username }}</h2>
+            <p class="text-secondary mx-auto mb-2">{{ current_user.email }}</p>
+      </div> <hr>
       <!-- FORM HERE -->
         <form method="POST" action="" enctype="multipart/form-data">
             {{ form.hidden_tag() }}
             <fieldset class="form-group">
-                <legend class="border-bottom mb-4">Account Info</legend>
+                <legend class="mb-2">Account Info</legend>
                 <div class="form-group">
                     {{ form.username.label(class="form-control-label") }}
 
