@@ -15,7 +15,11 @@
         </div>
         <h5 class="article-title text-justify">{{ post.title }}</h5>
         <p class="article-content text-justify ">{{ post.content }}</p>
-        <p><a class="article-content text-justify" href=" #">{{ post.tags }}</a></p> <hr>
+        {% for tag in joinedTables %}
+            {% if post.id in tag %}
+            <a class="article-content tag-style text-justify" href="{{ url_for('tags', tag_title=tag.tag_title) }}">{{ tag.tag_title }}</a>
+            {% endif %}
+            {% endfor %}<hr>
         <div class="footRow">
           {%  if current_user.is_authenticated %}
 
@@ -67,11 +71,12 @@
                     {% else %}
                         {{ form.comment(class="form-control form-control-lg") }}
                     {% endif %}
+                    {{ form.submit(class="btn btn-outline-info") }}
                 </div>
-
+<!-- 
             <div class="form-group">
-                {{ form.submit(class="btn btn-outline-info") }}
-            </div>
+                
+            </div> -->
         </form>
            {% for comment in comments %}
                   <article>

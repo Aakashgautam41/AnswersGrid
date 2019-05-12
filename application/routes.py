@@ -19,7 +19,6 @@ def home():
     page = request.args.get('page',1,type=int)
     posts = Post.query.order_by(Post.date_posted.desc()).paginate(page=page, per_page=5)
     voted = Vote.query.order_by(Vote.post_id.desc())
-    a= request.form.get('editordata')
 
     # Join tables (tagposts, Tags and Post) to get tags for each post
     joinedTables = db.session.query(tagposts.post_id,tagposts.tag_id,Tags.tag_title,Post.title,Post.user_id,Post.like_count,Post.content).join(Tags).join(Post).all()
@@ -300,7 +299,11 @@ def user_posts(username):
     posts = Post.query.filter_by(author=user)\
         .order_by(Post.date_posted.desc())\
         .paginate(page=page, per_page=5)
-    return render_template('user_posts.html', posts=posts, user=user)
+
+    # Join tables (tagposts, Tags and Post) to get tags for each post
+    joinedTables = db.session.query(tagposts.post_id,tagposts.tag_id,Tags.tag_title,Post.title,Post.user_id,Post.like_count,Post.content).join(Tags).join(Post).all()
+
+    return render_template('user_posts.html', posts=posts, user=user, joinedTables=joinedTables)
 
 
 @app.route("/post/<int:post_id>/comment", methods=['GET', 'POST'])
@@ -308,6 +311,9 @@ def user_posts(username):
 def comment_post(post_id):
     post = Post.query.get_or_404(post_id)
     posts_id = post.id
+
+    # Join tables (tagposts, Tags and Post) to get tags for each post
+    joinedTables = db.session.query(tagposts.post_id,tagposts.tag_id,Tags.tag_title,Post.title,Post.user_id,Post.like_count,Post.content).join(Tags).join(Post).all()
 
     form = CommentForm()
     if form.validate_on_submit():
@@ -317,11 +323,11 @@ def comment_post(post_id):
         db.session.commit()
         print(current_user.id)
         comments = Comment.query.filter(Comment.post_id == post_id).order_by(Comment.date_posted.desc())
-        flash('Your comment has been posted', 'success')
-        return render_template('comment_post.html', title='Comment', form=form, post=post, comments=comments)
+        # flash('Your comment has been posted', 'success')
+        return render_template('comment_post.html', title='Comments', form=form, post=post, comments=comments, joinedTables=joinedTables)
     else:
         comments = Comment.query.filter(Comment.post_id == post_id).order_by(Comment.date_posted.desc())
-        return render_template('comment_post.html', title='Comment', form=form, post=post, comments=comments)
+        return render_template('comment_post.html', title='Comments', form=form, post=post, comments=comments, joinedTables=joinedTables)
 
 
 @app.route("/search", methods=['GET', 'POST'])
@@ -329,7 +335,11 @@ def search():
         page = request.args.get('page', 1, type=int)
         searched_content = request.form.get('search')
         searched_posts = Post.query.filter(Post.content.like('%'+searched_content+'%')).paginate(page=page, per_page=5)
-        return render_template('search.html', searched_posts=searched_posts)
+
+        # Join tables (tagposts, Tags and Post) to get tags for each post
+        joinedTables = db.session.query(tagposts.post_id,tagposts.tag_id,Tags.tag_title,Post.title,Post.user_id,Post.like_count,Post.content).join(Tags).join(Post).all()
+
+        return render_template('search.html', searched_posts=searched_posts, joinedTables=joinedTables)
 
 
 @app.route('/vote/<int:post_id>/<int:user_id>')
@@ -442,7 +452,7 @@ def tags(tag_title):
     for item in joinedTables:
         if tag_title in item.tag_title:
             print(tag_title, item.post_id, item.title, item.user_id,  item.username, item.image_file)
-
+            
 
             return render_template("tags.html", posts=posts, joinedTables=joinedTables, tag_title=tag_title)
 

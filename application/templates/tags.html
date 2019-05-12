@@ -5,11 +5,11 @@
         <article class="media content-section">
           <div class="media-body">
             <img class="rounded-circle article-img" src="{{ url_for('static', filename='profile_pics/' + item.image_file) }}">
-            <a class="mr-2" href="#">{{ item.username }}</a>
+            <a class="mr-2" href="{{ url_for('user_posts', username=item.username) }}">{{ item.username }}</a>
             <small class="text-muted">{{ item.date_posted.strftime('%d-%m-%Y') }}</small>
             <div class="article-metadata">
             </div>
-            <h4><a class="article-title" href="#">{{ item.title }}</a></h4>
+            <h4><a class="article-title" href="{{ url_for('comment_post', post_id=item.id) }}">{{ item.title }}</a></h4>
             <p class="article-content more">{{ item.content }}</p>
             <p><a class="article-content tag-style" href="#">{{ item.tag_title }}</a></p><hr>
 
