@@ -350,13 +350,17 @@ def upvote(post_id,user_id):
     # Check if entry is already present in the table
     post_present = db.session.query(db.exists().where(and_(Vote.post_id == post_id, Vote.user_id == user_id))).scalar()
 
+    # Check if user has Disliked this post or not
+    post_inDownvote = db.session.query(db.exists().where(and_(Downvote.post_id == post_id, Downvote.user_id == user_id))).scalar()
+    
+
     if post_present == True:
         print("All ready upvoted")
         print(post_id)
         print(user_id)
         print(post_present)
 
-        # If YES, Delete the entry
+        # If Yes, Delete the entry
         Vote.query.filter_by(post_id=post_id, user_id=user_id).delete()
         Vote.action = "not-liked"
         db.session.commit()
@@ -369,11 +373,41 @@ def upvote(post_id,user_id):
         print(db.session.query(Vote).filter(Vote.post_id == post_id).count())
         print(posts.like_count)
         print(posts)
+        print("inside if")
         return jsonify(db.session.query(Vote).filter(Vote.post_id == post_id).count())
 
     # If entry is not already present in the table
-    else:
+    elif post_inDownvote == True:
+        Downvote.query.filter_by(post_id=post_id, user_id=user_id).delete()
+        print("Dislike Removed")
+        db.session.commit()
         # Then add entry in the table
+        vote = Vote(user_id=user_id, post_id=post_id)
+        vote.action = "liked"
+        db.session.add(vote)
+        db.session.commit()
+        # flash("Your vote has been registered.","success")
+        print(post_inDownvote)
+
+        # Count all entries on that post
+        upvoteCount = db.session.query(Vote).filter(Vote.post_id == post_id).count()
+        posts.like_count = upvoteCount
+        db.session.commit()
+
+        downvoteCount = db.session.query(Downvote).filter(Downvote.post_id == post_id).count()
+        posts.dislike_count = downvoteCount
+        db.session.commit()
+
+        print(db.session.query(Vote).filter(Vote.post_id == post_id).count())
+        print(posts.like_count)
+        print(posts)
+        print("inside elif")
+        print(db.session.query(Downvote).filter(Downvote.post_id == post_id).count())
+        print( posts.dislike_count)
+
+        return jsonify(db.session.query(Vote).filter(Vote.post_id == post_id).count())
+    else:
+         # Then add entry in the table
         vote = Vote(user_id=user_id, post_id=post_id)
         vote.action = "liked"
         db.session.add(vote)
@@ -385,10 +419,13 @@ def upvote(post_id,user_id):
         upvoteCount = db.session.query(Vote).filter(Vote.post_id == post_id).count()
         posts.like_count = upvoteCount
         db.session.commit()
+
         print(db.session.query(Vote).filter(Vote.post_id == post_id).count())
         print(posts.like_count)
         print(posts)
+        print("inside else")
         return jsonify(db.session.query(Vote).filter(Vote.post_id == post_id).count())
+        
 
 
 @app.route('/downvote/<int:post_id>/<int:user_id>')
@@ -404,11 +441,12 @@ def downvote(post_id,user_id):
         print(post_id)
         print(user_id)
         print(post_present)
+    
 
         # If YES, Delete the entry
         Downvote.query.filter_by(post_id=post_id, user_id=user_id).delete()
         db.session.commit()
-        flash("Your downvote has been removed !!","success")
+        # flash("Your downvote has been removed !!","success")
 
         # Count all entries on that post
         DownvoteCount = db.session.query(Downvote).filter(Downvote.post_id == post_id).count()
@@ -417,6 +455,7 @@ def downvote(post_id,user_id):
         print(db.session.query(Downvote).filter(Downvote.post_id == post_id).count())
         print(posts.dislike_count)
         print(posts)
+        return jsonify(db.session.query(Downvote).filter(Downvote.post_id == post_id).count())
 
     # If entry is not already present in the table
     else:
@@ -425,7 +464,7 @@ def downvote(post_id,user_id):
         downvote.action = "disliked"
         db.session.add(downvote)
         db.session.commit()
-        flash("You have disliked the post","success")
+        # flash("You have disliked the post","success")
         print(post_present)
 
         # Count all entries on that post
@@ -435,8 +474,8 @@ def downvote(post_id,user_id):
         print(db.session.query(Downvote).filter(Downvote.post_id == post_id).count())
         print(posts.dislike_count)
         print(posts)
-
-    return redirect("/home")
+        return jsonify(db.session.query(Downvote).filter(Downvote.post_id == post_id).count())
+    
 
 
 @app.route('/tags/<tag_title>')
