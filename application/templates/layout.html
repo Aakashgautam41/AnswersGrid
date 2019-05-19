@@ -13,12 +13,17 @@
     <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
     <!-- include summernote css/js -->
     <link href="http://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.11/summernote.css" rel="stylesheet">
-    <script src="http://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.11/summernote.js"></script>
+    
     <!-- Select 2 js and css -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/js/select2.min.js"></script>
-    <link href="https://fonts.googleapis.com/css?family=Inconsolata" rel="stylesheet">
+
+    <!-- Jquery validation script -->
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-form-validator/2.3.26/jquery.form-validator.min.js"></script>
+    <link href="//cdnjs.cloudflare.com/ajax/libs/jquery-form-validator/2.3.26/theme-default.min.css"
+    rel="stylesheet" type="text/css" />
+
 
     {% if title %}
         <title>AnswersGrid - {{ title }}</title>
@@ -28,15 +33,14 @@
 
     <style>
       body {
-      /*background: #fafafa;*/
-      /* background: #2e363d; */
-      color: #333333;
+      color: #2e2626;
       margin-top: 5rem;
-      font-size: .9rem;
-      font-weight: 400;
+      font-size: 14px;
+      font-weight: unset;
       line-height: 1.5;
-      font-family: Inconsolata, monospace;
+      font-family: Arial;
     }
+   
   .form-control {
       display: block;
       width: 100%;
@@ -55,6 +59,7 @@
   }
   .search-btn{
     height: 2.2rem;
+    margin-right: 50px;
   }
  form .search-box {
     width: 20rem!important;
@@ -74,6 +79,10 @@
   .delete-btn{
     float: right;
   }
+  .deleteComment-btn{
+    float: right;
+    
+  }
   .edit-btn{
     float: right;
   }
@@ -88,25 +97,13 @@
     color: #2C3A47
     /* background: #B33771; */
   }
-  @media screen and (max-width: 992px) {
-    #content{
-    height: 100px;
-      }
 
-      .account-img {
-        height: 125px;
-        width: 125px;
-        margin-right: 10px;
-        margin-bottom: 16px;
-      }
-      .account-heading {
+  .account-heading {
         text-align: center;
         font-size: 2.5rem;
       }
-      .text-secondary{
-        text-align: center;
-      }
-
+  .text-secondary{
+    text-align: center;
   }
 
   .tag-style:hover {
@@ -153,7 +150,81 @@
     /* border:1px solid #f1545b; */
     color: #f1545b
   }
-  </style>
+  .answer-section{
+    margin-top: 50px;
+  }
+  .summernote-section{
+    margin-top: 50px;
+  }
+
+  .public-section{
+    margin-top: 50px;
+  }
+  .popover {
+    position: initial;
+    top: 0;
+    left: 0;
+    z-index: 1060;
+    display: none;
+    max-width: 276px;
+    font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
+    font-style: normal;
+    font-weight: 400;
+    line-height: 1.5;
+  }
+  .note-editor.note-frame .note-editing-area .note-editable {
+      padding: 10px;
+      overflow: auto;
+      color: #000;
+      word-wrap: break-word;
+      line-break: normal;
+      background-color: #fff;
+  }
+
+  .answerOverflow{
+    overflow: auto;
+  }
+  .nav-link:hover{
+    border-bottom: 2px solid #f82c68;
+    border-bottom-right-radius: 3px;
+    border-bottom-left-radius: 3px;
+  }
+  .list-group-item:last-child {
+    margin-bottom: 1px;
+    background: #fff;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    border-bottom: 1px solid#33aedc;
+  }
+    h4,h3{
+      color: #595a60;
+    }
+    .article-title {
+    color: #595a60;
+    }
+  @media screen and (max-width: 992px) {
+    .nav-link:hover{
+    border-bottom: none;
+    border-bottom-right-radius: 2px;
+    border-bottom-left-radius: 2px;
+    }
+    body {
+      color: #2e2626;
+      margin-top: 5rem;
+      font-size: 13.5px;
+      font-weight: unset;
+      line-height: 1.5;
+      font-family: Arial;
+    }
+    .article-title {
+    color: #595a60;
+    font-weight: normal;
+    font-size: 22px;
+    }
+
+  }
+    </style>
 
 </head>
 <body>
@@ -171,12 +242,12 @@
             </div>
             <form method="POST" action="/search" class="form-inline my-2 my-lg-0 form-group">
               <input class="form-control mr-sm-2 search-box" type="search" placeholder="Search your question :/" name="search" aria-label="Search">
-              <button class="btn bg-secondary text-white" type="submit">Search</button>
+              <button class="btn bg-secondary text-white mr-2" type="submit"><i class="fas fa-search"></i></button>
              </form>
             <!-- Navbar Right Side -->
             <div class="navbar-nav">
               {%  if current_user.is_authenticated %}
-              <a class="nav-item nav-link" href="{{ url_for('new_post') }}">Ask Question</a>
+              <a class="nav-item nav-link" href="{{ url_for('new_post') }}">Add Question</a>
               <a class="nav-item nav-link" href="{{ url_for('account') }}">Account</a>
               <a class="nav-item nav-link" href="{{ url_for('logout') }}">Logout</a>
               {% else  %}
@@ -206,15 +277,15 @@
         </div>
         <div class="col-md-4">
           <div class="content-section">
-            <h3>AnswersGrid Sidebar</h3>
-            <p class='text-muted'>Public
-              <ul class="list-group">
-                <li class="list-group-item list-group-item-light">Latest Questions</li>
-                <li class="list-group-item list-group-item-light">Tags</li>
-                <li class="list-group-item list-group-item-light">Users</li>
-                <li class="list-group-item list-group-item-light">etc</li>
-              </ul>
-            </p>
+              <h3>AnswersGrid Sidebar </h3>
+              <p class='text-muted'>Public <i class="fas fa-globe-americas"></i>
+                <ul class="list-group">
+                  <a href="{{url_for('most_liked')}}"><li class="list-group-item list-group-item-light sidebar">Most Liked</li></a> 
+                  <a><li class="list-group-item list-group-item-light sidebar">Tags</li></a> 
+                  <a><li class="list-group-item list-group-item-light sidebar">Users</li></a>
+                </ul>
+              </p>
+          </div>
           </div>
         </div>
       </div>
@@ -227,13 +298,13 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.11/summernote.js"></script>
     <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
     <script>
-
           $(document).ready(function() {
           	var showChar = 400;
-          	var moretext = "more";
-          	var lesstext = "less";
+          	var moretext = "(More)";
+          	var lesstext = "(Less)";
           	var ellipsesText = " ...";
           	$('.more').each(function() {
           		var content = $(this).html();

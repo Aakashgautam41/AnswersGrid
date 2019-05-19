@@ -1,7 +1,7 @@
 from flask import render_template, url_for, flash, redirect, request, abort, jsonify
-from application import app, db, bcrypt, mail
+from application import app, db, bcrypt
 from application.forms import RegistrationForm, LoginForm, UpdateAccountForm, PostForm, CommentForm, RequestResetForm, ResetPasswordForm
-from application.models import User, Post, Comment, Vote, Downvote, Tags, tagposts
+from application.models import User, Post, Answer, Comment, Vote, Downvote, Tags, tagposts, Answerupvotes, Answerdownvotes
 from flask_login import login_user, current_user, logout_user, login_required
 import secrets
 import os
@@ -10,7 +10,7 @@ from sqlalchemy.sql import exists
 from sqlalchemy import func
 from sqlalchemy import and_
 from sqlalchemy import create_engine
-from flask_mail import Message
+# from flask_mail import Message
 
 
 @app.route("/")
@@ -31,66 +31,6 @@ def home():
 @app.route("/about")
 def about():
     return render_template('about.html', title='About')
-
-
-@app.route("/getdata/<int:post_id>/<int:user_id>")
-def getdata(post_id,user_id):
-    # tags = [('73', 'Flask'),('70', 'Jquery'),('69', 'Python'),('72', 'Python'),('71', 'SQLAlchemy')]
-    # x = Tags.query.order_by(Tags.tag_title).all()
-    # z=[]
-
-    # for y in x:
-    #     z.append(str(y.tag_title))
-    # print(z)
-    # return jsonify(z)
-
-    posts = Post.query.order_by(Post.date_posted.desc())
-
-     # Check if entry is already present in the table
-    post_present = db.session.query(db.exists().where(and_(Vote.post_id == post_id, Vote.user_id == user_id))).scalar()
-
-    if post_present == True:
-        print("All ready upvoted")
-        print(post_id)
-        print(user_id)
-        print(post_present)
-
-        # If YES, Delete the entry
-        Vote.query.filter_by(post_id=post_id, user_id=user_id).delete()
-        Vote.action = "not-liked"
-        db.session.commit()
-        flash("Your vote has been removed.","success")
-
-        # Count all entries on that post
-        upvoteCount = db.session.query(Vote).filter(Vote.post_id == post_id).count()
-        posts.like_count = upvoteCount
-        db.session.commit()
-        print(db.session.query(Vote).filter(Vote.post_id == post_id).count())
-        print(posts.like_count)
-        print(posts)
-        return jsonify(db.session.query(Vote).filter(Vote.post_id == post_id).count())
-
-    # If entry is not already present in the table
-    else:
-        # Then add entry in the table
-        vote = Vote(user_id=user_id, post_id=post_id)
-        vote.action = "liked"
-        db.session.add(vote)
-        db.session.commit()
-        flash("Your vote has been registered.","success")
-        print(post_present)
-
-        # Count all entries on that post
-        upvoteCount = db.session.query(Vote).filter(Vote.post_id == post_id).count()
-        posts.like_count = upvoteCount
-        db.session.commit()
-        print(db.session.query(Vote).filter(Vote.post_id == post_id).count())
-        print(posts.like_count)
-        print(posts)
-        return jsonify(db.session.query(Vote).filter(Vote.post_id == post_id).count())
-
-    # return jsonify({'data' :render_template("data.html", posts=posts)})
-
 
 @app.route("/register", methods=['GET', 'POST'])
 def register():
@@ -243,8 +183,11 @@ def new_post():
             something = tagposts(post_id=post_id, tag_id=tag_id)
             db.session.add(something)
             db.session.commit()
+        return redirect(url_for('home'))
+    elif  request.method == 'GET':
+        return render_template('create_post.html', title='Ask Question', legend='Ask Question')
 
-    return render_template('create_post.html', title='Ask Question', legend='Ask Question')
+    
 
 
 
@@ -258,27 +201,50 @@ def post(post_id):
 @login_required
 def update_post(post_id):
     post = Post.query.get_or_404(post_id)
-    tagpost = tagposts.query.filter_by(post_id=post_id).first_or_404()
-    tagId = tagpost.tag_id
-    tag = Tags.query.filter_by(tag_id=tagId).first_or_404()
+    # Join tables (tagposts, Tags and Post) to get tags for each post
+    joinedTables = db.session.query(tagposts.post_id,tagposts.tag_id,Tags.tag_title,Post.title,Post.user_id,Post.like_count,Post.content).join(Tags).join(Post).all()
+
+
+    post_dict = dict()
+    post_dict['post_id'] = post_id
+    post_dict['post_title'] = post.title
+    post_dict['post_content'] = post.content
+
 
     # If post author is not current user then abort
     if post.author != current_user:
         abort(403)
     # Else if current user is author then import the form
+    if request.method == 'POST':
         post.title = request.form.get('title')
         post.content = request.form.get('content')
-        tag.tag_title = request.form.getlist('tags')
         db.session.commit()
+
+        # Get all tags on the post
+        many_tags = request.form.getlist('tags')
+        for one_tag in many_tags:
+            print(one_tag)
+            tag = Tags(tag_title=one_tag)
+            db.session.add(tag)
+            db.session.commit()
         flash('Your question has been updated', 'success')
-        return redirect(url_for('post', post_id=post_id))
+        recent_post = Post.query.order_by(Post.date_posted.desc()).first()
+        post_id = recent_post.id
+
+        recent_tags = Tags.query.order_by(Tags.tag_id.desc()).limit(len(many_tags)).all()
+        print(recent_tags)
+
+        for tag in recent_tags: 
+            print(tag)
+            tag_id = tag.tag_id
+            something = tagposts(post_id=post_id, tag_id=tag_id)
+            db.session.add(something)
+            db.session.commit()
+        return redirect(url_for('home'))
     # Populate form with current post data
     elif request.method == 'GET':
-        # request.form.g  = post.title
-        # content.data = post.content
-        # tags.data = tag.tag_title
-        return render_template('create_post.html', title='Update Post', legend='Edit Your Question')
-
+      
+        return render_template('update.html', post=post_dict, joinedTables=joinedTables, title='Update Post', legend='Edit Your Question')
 
 @app.route("/post/<int:post_id>/delete", methods=['POST'])
 @login_required
@@ -315,6 +281,12 @@ def comment_post(post_id):
     # Join tables (tagposts, Tags and Post) to get tags for each post
     joinedTables = db.session.query(tagposts.post_id,tagposts.tag_id,Tags.tag_title,Post.title,Post.user_id,Post.like_count,Post.content).join(Tags).join(Post).all()
 
+    # Get answersCount on post
+    answersCount = db.session.query(Answer).filter(Answer.post_id == post_id).count()
+
+    # Get all answers from Answer table
+    answers = Answer.query.order_by(Answer.date_posted.desc()).all()
+
     form = CommentForm()
     if form.validate_on_submit():
         comment = Comment(comment=form.comment.data, post_id=posts_id, user_id=current_user.id)
@@ -324,10 +296,10 @@ def comment_post(post_id):
         print(current_user.id)
         comments = Comment.query.filter(Comment.post_id == post_id).order_by(Comment.date_posted.desc())
         # flash('Your comment has been posted', 'success')
-        return render_template('comment_post.html', title='Comments', form=form, post=post, comments=comments, joinedTables=joinedTables)
+        return render_template('comment_post.html', title='Comments', form=form, post=post, comments=comments, joinedTables=joinedTables, answersCount=answersCount, answers=answers)
     else:
         comments = Comment.query.filter(Comment.post_id == post_id).order_by(Comment.date_posted.desc())
-        return render_template('comment_post.html', title='Comments', form=form, post=post, comments=comments, joinedTables=joinedTables)
+        return render_template('comment_post.html', title='Comments', form=form, post=post, comments=comments, joinedTables=joinedTables, answersCount=answersCount, answers=answers)
 
 
 @app.route("/search", methods=['GET', 'POST'])
@@ -436,6 +408,9 @@ def downvote(post_id,user_id):
     # Check if entry is already present in the table
     post_present = db.session.query(db.exists().where(and_(Downvote.post_id == post_id, Downvote.user_id == user_id))).scalar()
 
+    # Check if user has Liked this post or not
+    post_inVote = db.session.query(db.exists().where(and_(Vote.post_id == post_id, Vote.user_id == user_id))).scalar()
+
     if post_present == True:
         print("All ready downvoted")
         print(post_id)
@@ -458,6 +433,37 @@ def downvote(post_id,user_id):
         return jsonify(db.session.query(Downvote).filter(Downvote.post_id == post_id).count())
 
     # If entry is not already present in the table
+    elif post_inVote == True:
+        # Remove like on the post from Vote table
+        Vote.query.filter_by(post_id=post_id, user_id=user_id).delete()
+        print("Like Removed")
+        db.session.commit()
+        # Then add entry in the table
+        downvote = Downvote(user_id=user_id, post_id=post_id)
+        downvote.action = "disliked"
+        db.session.add(downvote)
+        db.session.commit()
+        # flash("Your vote has been registered.","success")
+        print(post_inVote)
+
+        # Count all entries on that post
+        downvoteCount = db.session.query(Downvote).filter(Downvote.post_id == post_id).count()
+        posts.dislike_count = downvoteCount
+        db.session.commit()
+
+        upvoteCount = db.session.query(Vote).filter(Vote.post_id == post_id).count()
+        posts.like_count = upvoteCount
+        db.session.commit()
+
+        print(db.session.query(Downvote).filter(Downvote.post_id == post_id).count())
+        print(posts.dislike_count)
+        print(posts)
+        print("inside elif")
+        print(db.session.query(Vote).filter(Vote.post_id == post_id).count())
+        print( posts.like_count)
+
+        return jsonify(db.session.query(Downvote).filter(Downvote.post_id == post_id).count())
+
     else:
         # Then add entry in the table
         downvote = Downvote(user_id=user_id, post_id=post_id)
@@ -496,26 +502,232 @@ def tags(tag_title):
             return render_template("tags.html", posts=posts, joinedTables=joinedTables, tag_title=tag_title)
 
 
+@app.route("/comment/<int:post_id>/<int:comment_id>/delete", methods=['GET','POST'])
+@login_required
+def delete_comment(post_id,comment_id):
+    comment = Comment.query.get_or_404(comment_id)
+    print(comment)
+    post = Post.query.get_or_404(post_id)
+    print(post)
+    if post.author != current_user:
+        abort(403)
+    db.session.delete(comment)
+    db.session.commit()
+    flash('Comment has been deleted', 'success')
+    return redirect(url_for('comment_post', post_id=post_id))
 
 
+@app.route("/answer/<int:post_id>", methods=['GET', 'POST'])
+@login_required
+def answer(post_id):
+    if request.method == 'POST':
+        answer = Answer(content=request.form.get('editordata'), author=current_user, post_id=post_id)
+        db.session.add(answer)
+        db.session.commit()
+    
+        post = Post.query.get_or_404(post_id)
+        posts_id = post.id
+        
+        return redirect(url_for('comment_post', post_id=post_id))
 
-# TODO
-# Check if entry is already present in the table -- Done
-# If YES then delete the entry          --Done
-# Then count all entries on that post   -- Done
-
-# If entry is not already present in the table   --Done
-# Then add entry in the table   --Done
-# Count all entries on that post   --Done
+    return redirect(url_for('comment_post', post_id=post_id))
 
 
-# TODO
-# Update upvote/downvote without refeshing page
+@app.route("/answer/<int:answer_id>/delete", methods=['POST'])
+@login_required
+def delete_answer(answer_id):
+    answer = Answer.query.get_or_404(answer_id)
+    post_id = answer.post_id
+    print(answer.author)
+    print(current_user)
+    if answer.author != current_user:
+        abort(403)
+    db.session.delete(answer)
+    db.session.commit()
+    flash('Your answer has been deleted', 'success')
+    return redirect(url_for('comment_post', post_id=post_id))
 
-# TODO
-# Show tags on posts  -- Done
 
-# TODO
-# Make different route for tags
-# Make tags.html  --Done
-# When user clicks tag on post it should show all posts containing same tags  -- Done
+@app.route('/most_liked')
+def most_liked():
+    page = request.args.get('page',1,type=int)
+    posts = Post.query.order_by(Post.like_count.desc()).paginate(page=page, per_page=5)
+    voted = Vote.query.order_by(Vote.post_id.desc())
+
+    # Join tables (tagposts, Tags and Post) to get tags for each post
+    joinedTables = db.session.query(tagposts.post_id,tagposts.tag_id,Tags.tag_title,Post.title,Post.user_id,Post.like_count,Post.content).join(Tags).join(Post).all()
+    # print(joinedTables)
+
+
+    return render_template('most_liked.html', posts=posts, voted=voted, joinedTables=joinedTables)
+
+@app.route('/AnswerUpvotes/<int:answer_id>/<int:user_id>')
+@login_required
+def answerLikes(answer_id,user_id):
+    answers = Answer.query.get_or_404(answer_id)
+    print(answers)
+
+    # Check if entry is already present in the table
+    answer_present = db.session.query(db.exists().where(and_(Answerupvotes.answer_id == answer_id, Answerupvotes.user_id == user_id))).scalar()
+    # Check if user has Disliked this post or not
+    post_inAnswerDownvote = db.session.query(db.exists().where(and_(Answerdownvotes.answer_id == answer_id, Answerdownvotes.user_id == user_id))).scalar()
+    
+
+    if answer_present == True:
+        print("All ready upvoted")
+        print(answer_id)
+        print(user_id)
+        print(answer_present)
+
+        # If Yes, Delete the entry
+        Answerupvotes.query.filter_by(answer_id=answer_id, user_id=user_id).delete()
+        Answerupvotes.action = "not-liked"
+        db.session.commit()
+        # flash("Your vote has been removed.","success")
+
+        # Count all entries on that post
+        upvoteCount = db.session.query(Answerupvotes).filter(Answerupvotes.answer_id == answer_id).count()
+        answers.like_count = upvoteCount
+        db.session.commit()
+        print(db.session.query(Answerupvotes).filter(Answerupvotes.answer_id == answer_id).count())
+        print(answers.like_count)
+        print(answers)
+        print("inside if")
+        return jsonify(db.session.query(Answerupvotes).filter(Answerupvotes.answer_id == answer_id).count())
+
+        # If entry is not already present in the table
+    elif post_inAnswerDownvote == True:
+        Answerdownvotes.query.filter_by(answer_id=answer_id, user_id=user_id).delete()
+        print("Dislike Removed")
+        db.session.commit()
+
+        # Then add entry in the table
+        answersUpvote = Answerupvotes(user_id=user_id, answer_id=answer_id)
+        answersUpvote.action = "liked"
+        db.session.add(answersUpvote)
+        db.session.commit()
+        # flash("Your vote has been registered.","success")
+        print(post_inAnswerDownvote)
+
+        # Count all entries on that post
+        upvoteCount = db.session.query(Answerupvotes).filter(Answerupvotes.answer_id == answer_id).count()
+        answers.like_count = upvoteCount
+        db.session.commit()
+
+        downvoteCount = db.session.query(Answerdownvotes).filter(Answerdownvotes.answer_id == answer_id).count()
+        answers.dislike_count = downvoteCount
+        db.session.commit()
+
+        print(db.session.query(Answerupvotes).filter(Answerupvotes.answer_id == answer_id).count())
+        print(answers.like_count)
+        print(answers)
+        print("inside elif")
+        print(db.session.query(Answerdownvotes).filter(Answerdownvotes.answer_id == answer_id).count())
+        print(answers.dislike_count)
+
+        return jsonify(db.session.query(Answerupvotes).filter(Answerupvotes.answer_id == answer_id).count())
+    else:
+        # Then add entry in the table
+        answerUpvotes = Answerupvotes(user_id=user_id, answer_id=answer_id)
+        answerUpvotes.action = "liked"
+        db.session.add(answerUpvotes)
+        db.session.commit()
+        # flash("Your Answerupvotes has been registered.","success")
+        print(answer_present)
+
+        # Count all entries on that post
+        upvoteCount = db.session.query(Answerupvotes).filter(Answerupvotes.answer_id == answer_id).count()
+        answers.like_count = upvoteCount
+        db.session.commit()
+
+        print(db.session.query(Answerupvotes).filter(Answerupvotes.answer_id == answer_id).count())
+        print(answers.like_count)
+        print(answers)
+        print("inside else")
+        return jsonify(db.session.query(Answerupvotes).filter(Answerupvotes.answer_id == answer_id).count())
+
+
+@app.route('/AnswerDownvotes/<int:answer_id>/<int:user_id>')
+@login_required
+def answerDislikes(answer_id,user_id):
+    answers = Answer.query.get_or_404(answer_id)
+    print(answers)
+
+    # Check if entry is already present in the table
+    answer_present = db.session.query(db.exists().where(and_(Answerdownvotes.answer_id == answer_id, Answerdownvotes.user_id == user_id))).scalar()
+    # Check if user has Liked this post or not
+    post_inAnswerUpvote = db.session.query(db.exists().where(and_(Answerupvotes.answer_id == answer_id, Answerupvotes.user_id == user_id))).scalar()
+    
+
+    if answer_present == True:
+        print("All ready Downvoted")
+        print(answer_id)
+        print(user_id)
+        print(answer_present)
+
+        # If Yes, Delete the entry
+        Answerdownvotes.query.filter_by(answer_id=answer_id, user_id=user_id).delete()
+        Answerdownvotes.action = "not-liked"
+        db.session.commit()
+        # flash("Your vote has been removed.","success")
+
+        # Count all entries on that post
+        DownvoteCount = db.session.query(Answerdownvotes).filter(Answerdownvotes.answer_id == answer_id).count()
+        answers.dislike_count = DownvoteCount
+        db.session.commit()
+        print(db.session.query(Answerdownvotes).filter(Answerdownvotes.answer_id == answer_id).count())
+        print(answers.dislike_count)
+        print(answers)
+        print("inside if")
+        return jsonify(db.session.query(Answerdownvotes).filter(Answerdownvotes.answer_id == answer_id).count())
+
+        # If entry is not already present in the table
+    elif post_inAnswerUpvote == True:
+        Answerupvotes.query.filter_by(answer_id=answer_id, user_id=user_id).delete()
+        print("Like Removed")
+        db.session.commit()
+
+        # Then add entry in the Downvote table
+        answersDownvote = Answerdownvotes(user_id=user_id, answer_id=answer_id)
+        answersDownvote.action = "not-liked"
+        db.session.add(answersDownvote)
+        db.session.commit()
+        # flash("Your vote has been registered.","success")
+        print(post_inAnswerUpvote)
+
+        # Count all entries on that post
+        upvoteCount = db.session.query(Answerupvotes).filter(Answerupvotes.answer_id == answer_id).count()
+        answers.like_count = upvoteCount
+        db.session.commit()
+
+        DownvoteCount = db.session.query(Answerdownvotes).filter(Answerdownvotes.answer_id == answer_id).count()
+        answers.dislike_count = DownvoteCount
+        db.session.commit()
+
+        print(db.session.query(Answerdownvotes).filter(Answerdownvotes.answer_id == answer_id).count())
+        print(answers.dislike_count)
+        print(answers)
+        print("inside elif")
+
+        return jsonify(db.session.query(Answerdownvotes).filter(Answerdownvotes.answer_id == answer_id).count())
+    else:
+        # Then add entry in the table
+        answerDownvotes = Answerdownvotes(user_id=user_id, answer_id=answer_id)
+        answerDownvotes .action = "not-liked"
+        db.session.add(answerDownvotes )
+        db.session.commit()
+        # flash("Your Answerdownvotes has been registered.","success")
+        print(answer_present)
+
+        # Count all entries on that post
+        downvoteCount = db.session.query(Answerdownvotes).filter(Answerdownvotes.answer_id == answer_id).count()
+        answers.dislike_count = downvoteCount
+        db.session.commit()
+
+        print(db.session.query(Answerdownvotes).filter(Answerdownvotes.answer_id == answer_id).count())
+        print(answers.dislike_count)
+        print(answers)
+        print("inside else")
+        return jsonify(db.session.query(Answerdownvotes).filter(Answerdownvotes.answer_id == answer_id).count())
+
+

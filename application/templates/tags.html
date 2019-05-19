@@ -10,23 +10,41 @@
             <div class="article-metadata">
             </div>
             <h4><a class="article-title" href="{{ url_for('comment_post', post_id=item.id) }}">{{ item.title }}</a></h4>
-            <p class="article-content more">{{ item.content }}</p>
+            <p class="article-content more text-justify text-muted">{{ item.content }}</p>
             <p><a class="article-content tag-style" href="#">{{ item.tag_title }}</a></p><hr>
 
             <div class="footRow">
-            {%  if current_user.is_authenticated %}
-            <a href="{{ url_for('upvote', post_id=item.id, user_id=current_user.id) }}"><i class="fas fa-thumbs-up mr-1 btn text-primary upvote"><span class="ml-2 likes-count">{{ item.like_count }}</span></i></a>
-            <a href="{{ url_for('downvote', post_id=item.id, user_id=current_user.id) }}"><i class="fas fa-thumbs-down mr-1 btn text-dark"><span id="demo" class="ml-3">{{ item.like_count }}</i></a>
-            <a href="{{url_for('comment_post', post_id=item.id)}}"><i class="fas fa-comment-alt mr-1 btn text-dark"></i></a>
-            {% else %}
-            <a href="#"><i class="fas fa-thumbs-up mr-1 btn text-primary upvote"><span class="ml-2 likes-count">{{ item.like_count }}</span></i></a>
-            <a href="#"><i class="fas fa-thumbs-down mr-1 btn text-dark"><span id="demo" class="ml-3">{{ item.like_count }}</i></a>
-            <a href="{{url_for('comment_post', post_id=item.id)}}"><i class="fas fa-comment-alt mr-1 btn text-dark"></i></a>
-            {% endif %}
+                {%  if current_user.is_authenticated %}
+    
+                  <a><i class="fas fa-thumbs-up mr-1 btn upvote" id="/vote/{{item.id}}/{{current_user.id}}" onclick="contentDisp(this);">  {{ item.like_count }} </i></a>
+    
+                  <a><i class="fas fa-thumbs-down mr-1 btn upvote" id="/downvote/{{item.id}}/{{current_user.id}}" onclick="contentDisp(this);" >  {{ item.dislike_count }} </i></a>
+                    
+                  <a href="{{url_for('comment_post', post_id=item.id)}}"><i class="fas fa-comment-alt mr-1 btn text-dark"></i></a>
+                  {% else %}
+                  <a href="{{url_for('login')}}"><i class="fas fa-thumbs-up mr-1 btn text-primary upvote"><span class="ml-2 likes-count">{{ item.like_count }}</span></i></a>
+                  <a href="{{url_for('login')}}"><i class="fas fa-thumbs-down mr-1 btn text-dark"><span id="demo" class="ml-3">{{ item.like_count }}</i></a>
+                  <a href="{{url_for('comment_post', post_id=item.id)}}"><i class="fas fa-comment-alt mr-1 btn text-dark"></i></a>
+    
+                {% endif %}
             </div>
           </div>
         </article>
       {% endif %}
       {% endfor %}
+      <script>
+          function contentDisp(obj) {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function() {
+              if (this.readyState == 4 && this.status == 200) {
+                document.getElementById(String($(obj).attr("id"))).innerHTML =
+                this.responseText;
+              }
+            };
+            var someurl = String($(obj).attr("id"));
+            xhttp.open("GET", someurl, true);
+            xhttp.send();
+          }
+      </script>
 
 {% endblock content %}

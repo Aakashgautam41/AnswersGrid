@@ -1,29 +1,29 @@
 {% extends "layout.html" %}
 {% block content %}
 <div class="content-section">
-    <form class="form-group" action="/post/new" method="POST">
+    <form class="form-group" action="/post/{{ post.post_id }}/update" method="POST">
         <legend class="border-bottom mb-0">{{ legend }}</legend>
 
         <label for="">Title</label>
         (<span id="max-length-element">100</span> chars left)
-        <input type="text" class="form-control" id="textarea" placeholder="" name="title" data-validation="length" data-validation-length="10-100" data-validation-error-msg-container="#length-error-dialog" data-validation-error-msg="Title must be between 10-100 characters
+        <input value="{{ post.post_title }}" type="text" class="form-control" id="textarea" placeholder="" name="title" data-validation="length" data-validation-length="10-100" data-validation-error-msg-container="#length-error-dialog" data-validation-error-msg="Title must be between 10-100 characters
         ">
         <div id="length-error-dialog"></div>
 
         <label for="">Content</label>
         <textarea class="form-control" id="exampleFormControlTextarea1" rows="5" name="content" data-validation="required" data-validation-error-msg-container="#content-error-dialog" data-validation-error-msg="Content field cannot be empty
-        "></textarea>
+        ">{{ post.post_content }}</textarea>
         <div id="content-error-dialog"></div>
 
         <label for="">Tags</label>
-        <select class="form-control js-example-tokenizer js-example-basic-multiple mt-2" style="width:100%" multiple="multiple" name="tags" data-validation="length" data-validation-length="max2" data-validation="required"  data-validation-error-msg-container="#tags-error-dialog" id="tagId">
+        <select class="form-control js-example-tokenizer js-example-basic-multiple mt-2" style="width:100%" multiple="multiple" name="tags" data-validation="required" data-validation="length" data-validation-length="max2" data-validation-error-msg-container="#tags-error-dialog" value="HAHAHA">
             <option>Python</option>
             <option>Vue Js</option>
             <option>Flask</option>
         </select>
         <div id="tags-error-dialog"></div>
 
-        <button class="btn btn-primary mt-2" id="submit-btn">Post</button>
+        <button class="btn btn-primary mt-2">Post</button>
     </form>
 
     <script>
@@ -47,10 +47,7 @@
         console.log("Hello World !");
         $.validate();
         $('#textarea').restrictLength( $('#max-length-element') );
-        $('#submit-btn').click(function(){
-            console.log($('#tagId').length);
-        });
-        
+       
     </script>
 </div>
 {% endblock content %}
