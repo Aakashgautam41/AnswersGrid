@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="summernote-section">
+    <div class="summernote-section"> 
+        <div>
+            <h4>Edit Your Answer </h4>
+            
+        </div><hr>
+            <div class="mb-5">
+                <form action="{{ url_for('update_answer',answer_id=answer.id, post_id=post.id, ) }}" method="post">
+                        <button class="btn btn-primary editAnswer-btn">Post Your Answer</button> 
+                        <textarea id="summernote" name="editordata" class="mb-5" required>{{ answer.content|safe }}</textarea>
+                        
+                </form>
+            </div>
+           
+                
+    </div>
+    <script>
+        $(document).ready(function() {
+          $('#summernote').summernote();
+        });
+    </script>
+</div>
+
+{% endblock content %}

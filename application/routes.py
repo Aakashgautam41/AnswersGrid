@@ -731,3 +731,29 @@ def answerDislikes(answer_id,user_id):
         return jsonify(db.session.query(Answerdownvotes).filter(Answerdownvotes.answer_id == answer_id).count())
 
 
+@app.route("/answer/<int:post_id>/<int:answer_id>/update", methods=['GET', 'POST'])
+@login_required
+def update_answer(answer_id, post_id):
+    answer = Answer.query.get_or_404(answer_id)
+    print(answer)
+    post = Post.query.get_or_404(post_id)
+    # Join tables (tagposts, Tags and Post) to get tags for each post
+    joinedTables = db.session.query(tagposts.post_id,tagposts.tag_id,Tags.tag_title,Post.title,Post.user_id,Post.like_count,Post.content).join(Tags).join(Post).all()
+
+
+
+
+    # If answer author is not current user then abort
+    if answer.author != current_user:
+        abort(403)
+    # Else if current user is author then import the form
+    if request.method == 'POST':
+        answer.content = request.form.get('editordata')
+        db.session.commit()
+        return redirect(url_for('comment_post', post_id=post_id))
+        
+
+    # Populate form with current answer data
+    elif request.method == 'GET':
+      
+        return render_template('editAnswer.html',post=post, answer=answer, joinedTables=joinedTables, title='Update Answer', legend='Edit Your Answer')

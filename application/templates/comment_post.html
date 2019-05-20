@@ -159,7 +159,7 @@
             <small class="text-muted">{{ post.date_posted.strftime('%d-%m-%Y') }}</small>
             {% if answer.author == current_user  %}
   
-                <a class="btn btn-secondary btn-sm mt-1 mb-1 edit-btn" href="{{ url_for('update_post', post_id=post.id)  }}">Edit</a>
+                <a class="btn btn-secondary btn-sm mt-1 mb-1 edit-btn" href="{{ url_for('update_answer', answer_id=answer.id, post_id=post.id)  }}">Edit</a>
                 <button type="button" class="btn btn-danger btn-sm m-1 delete-btn" data-toggle="modal" data-target="#deleteAnswerModal">Delete</button>
   
             {% endif %}
