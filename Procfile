@@ -1,1 +1,1 @@
-web: gunicorn AnswersGrid.wsgi
+web: gunicorn AnswersGrid.wsgi --log-file -
