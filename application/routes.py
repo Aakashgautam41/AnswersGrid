@@ -8,11 +8,11 @@ import os
 from PIL import Image
 from sqlalchemy.sql import exists
 from sqlalchemy import func
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 from sqlalchemy import create_engine
 # from flask_mail import Message
 
-
+# ---------- Home route ---------
 @app.route("/")
 @app.route("/home")
 def home():
@@ -27,11 +27,12 @@ def home():
 
     return render_template('home.html', posts=posts, voted=voted, joinedTables=joinedTables)
 
-
+# ---------- About route ---------
 @app.route("/about")
 def about():
     return render_template('about.html', title='About')
 
+# ---------- Register route ---------
 @app.route("/register", methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
@@ -46,7 +47,7 @@ def register():
         return redirect(url_for('login'))
     return render_template('register.html', title='Register', form=form)
 
-
+# ---------- Login route ---------
 @app.route("/login", methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -64,7 +65,7 @@ def login():
             flash('Login Unsuccessful. Please check email and password', 'danger')
     return render_template('login.html', title='Login', form=form)
 
-
+# ---------- Logout route ---------
 @app.route("/logout")
 @login_required
 def logout():
@@ -82,6 +83,7 @@ If you did not make this request then simply ignore this email and no changes wi
 '''
     mail.send(msg)
 
+# ---------- Reset Password route ---------
 @app.route("/reset_password", methods=['GET', 'POST'])
 def reset_request():
     if current_user.is_authenticated:
@@ -94,7 +96,7 @@ def reset_request():
         return redirect(url_for('login'))
     return render_template('reset_request.html', title='Reset Password', form=form)
 
-
+# ---------- Reset Paasword Token route ---------
 @app.route("/reset_password/<token>", methods=['GET', 'POST'])
 def reset_token(token):
     if current_user.is_authenticated:
@@ -115,7 +117,7 @@ def reset_token(token):
 
 
 
-
+# ---------- Save picture method ---------
 def save_picture(form_picture):
     random_hex = secrets.token_hex(8)
     _, f_ext = os.path.splitext(form_picture.filename)
@@ -130,6 +132,7 @@ def save_picture(form_picture):
     # form_picture.save(picture_path)
     return picture_fn
 
+# ---------- Account route ---------
 @app.route("/account", methods=['GET', 'POST'])
 @login_required
 def account():
@@ -151,7 +154,7 @@ def account():
     image_file = url_for('static', filename='profile_pics/'+ current_user.image_file)
     return render_template('account.html', title='Account', image_file=image_file, form=form)
 
-
+# ---------- New Post route ---------
 @app.route("/post/new", methods=['GET', 'POST'])
 @login_required
 def new_post():
@@ -190,13 +193,13 @@ def new_post():
     
 
 
-
+# ---------- Posts route ---------
 @app.route("/post/<int:post_id>", methods=['GET', 'POST'])
 def post(post_id):
     post = Post.query.get_or_404(post_id)
     return render_template('post.html',title=post.title,post=post)
 
-
+# ---------- Update Post route ---------
 @app.route("/post/<int:post_id>/update", methods=['GET', 'POST'])
 @login_required
 def update_post(post_id):
@@ -228,8 +231,8 @@ def update_post(post_id):
             db.session.add(tag)
             db.session.commit()
         flash('Your question has been updated', 'success')
-        recent_post = Post.query.order_by(Post.date_posted.desc()).first()
-        post_id = recent_post.id
+        # updated_post = Post.query.filter_by(post_id)
+        # post_id = recent_post.id
 
         recent_tags = Tags.query.order_by(Tags.tag_id.desc()).limit(len(many_tags)).all()
         print(recent_tags)
@@ -246,6 +249,7 @@ def update_post(post_id):
       
         return render_template('update.html', post=post_dict, joinedTables=joinedTables, title='Update Post', legend='Edit Your Question')
 
+# ---------- Delete Post route ---------
 @app.route("/post/<int:post_id>/delete", methods=['POST'])
 @login_required
 def delete_post(post_id):
@@ -257,7 +261,7 @@ def delete_post(post_id):
     flash('Your question has been deleted', 'success')
     return redirect(url_for('home'))
 
-
+# ---------- User Posts route ---------
 @app.route("/user/<string:username>")
 def user_posts(username):
     page = request.args.get('page', 1, type=int)
@@ -271,7 +275,7 @@ def user_posts(username):
 
     return render_template('user_posts.html', posts=posts, user=user, joinedTables=joinedTables)
 
-
+# ---------- Post Comment route ---------
 @app.route("/post/<int:post_id>/comment", methods=['GET', 'POST'])
 @login_required
 def comment_post(post_id):
@@ -301,19 +305,21 @@ def comment_post(post_id):
         comments = Comment.query.filter(Comment.post_id == post_id).order_by(Comment.date_posted.desc())
         return render_template('comment_post.html', title='Comments', form=form, post=post, comments=comments, joinedTables=joinedTables, answersCount=answersCount, answers=answers)
 
-
+# ---------- Search route ---------
 @app.route("/search", methods=['GET', 'POST'])
 def search():
         page = request.args.get('page', 1, type=int)
         searched_content = request.form.get('search')
-        searched_posts = Post.query.filter(Post.content.like('%'+searched_content+'%')).paginate(page=page, per_page=5)
 
         # Join tables (tagposts, Tags and Post) to get tags for each post
-        joinedTables = db.session.query(tagposts.post_id,tagposts.tag_id,Tags.tag_title,Post.title,Post.user_id,Post.like_count,Post.content).join(Tags).join(Post).all()
+        # joinedTables = db.session.query(tagposts.post_id,tagposts.tag_id,Tags.tag_title,Post.title,Post.user_id,Post.like_count,Post.content).join(Tags).join(Post).all()
+        # print(joinedTables)
+        
+        searched_posts = Post.query.filter(or_(Post.title.like('%'+searched_content+'%'),Post.content.like('%'+searched_content+'%'))).paginate(page=page, per_page=5)
 
-        return render_template('search.html', searched_posts=searched_posts, joinedTables=joinedTables)
+        return render_template('search.html', searched_posts=searched_posts)
 
-
+# ---------- Upvote route ---------
 @app.route('/vote/<int:post_id>/<int:user_id>')
 @login_required
 def upvote(post_id,user_id):
@@ -399,7 +405,7 @@ def upvote(post_id,user_id):
         return jsonify(db.session.query(Vote).filter(Vote.post_id == post_id).count())
         
 
-
+# ---------- Downvote route ---------
 @app.route('/downvote/<int:post_id>/<int:user_id>')
 @login_required
 def downvote(post_id,user_id):
@@ -483,7 +489,7 @@ def downvote(post_id,user_id):
         return jsonify(db.session.query(Downvote).filter(Downvote.post_id == post_id).count())
     
 
-
+# ---------- Tags route ---------
 @app.route('/tags/<tag_title>')
 def tags(tag_title):
     page = request.args.get('page',1,type=int)
@@ -501,7 +507,7 @@ def tags(tag_title):
 
             return render_template("tags.html", posts=posts, joinedTables=joinedTables, tag_title=tag_title)
 
-
+# ---------- Delete Comment route ---------
 @app.route("/comment/<int:post_id>/<int:comment_id>/delete", methods=['GET','POST'])
 @login_required
 def delete_comment(post_id,comment_id):
@@ -516,7 +522,7 @@ def delete_comment(post_id,comment_id):
     flash('Comment has been deleted', 'success')
     return redirect(url_for('comment_post', post_id=post_id))
 
-
+# ---------- Answer route ---------
 @app.route("/answer/<int:post_id>", methods=['GET', 'POST'])
 @login_required
 def answer(post_id):
@@ -532,7 +538,7 @@ def answer(post_id):
 
     return redirect(url_for('comment_post', post_id=post_id))
 
-
+# ---------- Delete Answer route ---------
 @app.route("/answer/<int:answer_id>/delete", methods=['POST'])
 @login_required
 def delete_answer(answer_id):
@@ -547,7 +553,7 @@ def delete_answer(answer_id):
     flash('Your answer has been deleted', 'success')
     return redirect(url_for('comment_post', post_id=post_id))
 
-
+# ---------- Mostliked route ---------
 @app.route('/most_liked')
 def most_liked():
     page = request.args.get('page',1,type=int)
@@ -561,6 +567,7 @@ def most_liked():
 
     return render_template('most_liked.html', posts=posts, voted=voted, joinedTables=joinedTables)
 
+# ---------- Answer Upvotes route ---------
 @app.route('/AnswerUpvotes/<int:answer_id>/<int:user_id>')
 @login_required
 def answerLikes(answer_id,user_id):
@@ -646,7 +653,7 @@ def answerLikes(answer_id,user_id):
         print("inside else")
         return jsonify(db.session.query(Answerupvotes).filter(Answerupvotes.answer_id == answer_id).count())
 
-
+# ---------- Answer Downvotes route ---------
 @app.route('/AnswerDownvotes/<int:answer_id>/<int:user_id>')
 @login_required
 def answerDislikes(answer_id,user_id):
@@ -730,7 +737,7 @@ def answerDislikes(answer_id,user_id):
         print("inside else")
         return jsonify(db.session.query(Answerdownvotes).filter(Answerdownvotes.answer_id == answer_id).count())
 
-
+# ---------- Answer Update  route ---------
 @app.route("/answer/<int:post_id>/<int:answer_id>/update", methods=['GET', 'POST'])
 @login_required
 def update_answer(answer_id, post_id):
