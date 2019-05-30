@@ -17,6 +17,7 @@ class User(db.Model, UserMixin):
     posts = db.relationship('Post', backref='author', lazy=True)
     answers = db.relationship('Answer', backref="author", lazy=True)
     comments = db.relationship('Comment', backref='author', lazy=True)
+    favourites = db.relationship('Favourite', backref='author', lazy=True)
 
     # Method to create token
     def get_reset_token(self, expires_sec=1800):
@@ -47,6 +48,7 @@ class Post(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     comments = db.relationship('Comment', backref='commentOnPost', lazy=True)
     answers = db.relationship('Answer', backref='answerOnPost', lazy=True)
+    favourites = db.relationship('Favourite', backref='favour_post', lazy=True)
 
     def __repr__(self):
         return f"Post('{self.title}', '{self.date_posted}', '{self.like_count}')"
@@ -132,3 +134,18 @@ class Answerdownvotes(db.Model):
 
     def __repr__(self):
         return f"Answerdownvotes('{self.user_id}', '{self.answer_id}', '{self.action}')"
+
+        
+class Favourite(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    current_user_id = db.Column(db.Integer, nullable=False)
+    title = db.Column(db.String(100), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    like_count = db.Column(db.Integer, nullable=False, default=0)
+    dislike_count = db.Column(db.Integer, nullable=False, default=0)
+
+    def __repr__(self):
+        return f"Favourite('{self.user_id}', '{self.post_id}', '{self.title}', '{self.date_posted}', '{self.like_count}')"

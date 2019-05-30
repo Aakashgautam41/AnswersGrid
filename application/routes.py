@@ -1,7 +1,7 @@
 from flask import render_template, url_for, flash, redirect, request, abort, jsonify
 from application import app, db, bcrypt
 from application.forms import RegistrationForm, LoginForm, UpdateAccountForm, PostForm, CommentForm, RequestResetForm, ResetPasswordForm
-from application.models import User, Post, Answer, Comment, Vote, Downvote, Tags, tagposts, Answerupvotes, Answerdownvotes
+from application.models import User, Post, Answer, Comment, Vote, Downvote, Tags, tagposts, Answerupvotes, Answerdownvotes, Favourite
 from flask_login import login_user, current_user, logout_user, login_required
 import secrets
 import os
@@ -764,3 +764,43 @@ def update_answer(answer_id, post_id):
     elif request.method == 'GET':
       
         return render_template('editAnswer.html',post=post, answer=answer, joinedTables=joinedTables, title='Update Answer', legend='Edit Your Answer')
+
+# ---------- Favourite Posts routes ----------
+@app.route("/favourite/<int:post_id>", methods=['GET', 'POST'])
+def favourite_post(post_id):
+    post = Post.query.get_or_404(post_id)
+
+    post_present = db.session.query(db.exists().where(and_(Favourite.post_id == post_id, Favourite.current_user_id == current_user.id))).scalar()
+
+    if post_present == True:
+        flash("Post is already in favourites", 'success')
+    else:
+        addFavourite = Favourite(post_id=post_id, user_id=post.user_id, current_user_id=current_user.id, title=post.title,content=post.content,date_posted=post.date_posted,like_count=post.like_count, dislike_count=post.dislike_count)
+        db.session.add(addFavourite)
+        db.session.commit()
+        flash("Post has been added to favourites", 'success')
+    
+    return redirect(url_for('home'))
+
+# ---------- Show Favourite Posts routes ----------
+@app.route("/favourite", methods=['GET', 'POST'])
+def favourite():
+
+    page = request.args.get('page',1,type=int)
+    posts = Favourite.query.filter_by(current_user_id=current_user.id).order_by(Favourite.id.desc()).paginate(page=page, per_page=5)
+
+    # Join tables (tagposts, Tags and Post) to get tags for each post
+    joinedTables = db.session.query(tagposts.post_id,tagposts.tag_id,Tags.tag_title,Post.title,Post.user_id,Post.like_count,Post.content,Post.id,Post.author,Post.date_posted,User.username,User.image_file, Favourite.post_id, Favourite.user_id).join(Tags).join(Post).join(User).join(Favourite).all()
+    # print(joinedTables)
+
+
+            
+
+    return render_template("favourite.html", posts=posts, joinedTables=joinedTables)
+
+# ---------- Delete Favourite Posts routes ----------
+@app.route("/delete/favourites/<int:post_id>", methods=['GET', 'POST'])
+def delete_favourites(post_id):
+    Favourite.query.filter_by(post_id=post_id).delete()
+    db.session.commit()
+    return redirect(url_for('favourite'))

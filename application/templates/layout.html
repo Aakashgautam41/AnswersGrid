@@ -4,10 +4,10 @@
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main.css') }}">
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main.css') }}">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
     <link href="https://fonts.googleapis.com/css?family=Raleway|Roboto|Ubuntu" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
@@ -23,7 +23,7 @@
     <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-form-validator/2.3.26/jquery.form-validator.min.js"></script>
     <link href="//cdnjs.cloudflare.com/ajax/libs/jquery-form-validator/2.3.26/theme-default.min.css"
     rel="stylesheet" type="text/css" />
-
+    
 
     {% if title %}
         <title>AnswersGrid - {{ title }}</title>
@@ -203,8 +203,11 @@
     .article-title {
     color: #595a60;
     }
+    .fa-heart {
+      color: #4267b2;
+    }
    
-  @media screen and (max-width: 992px) {
+  @media screen and (min-width: 768px) {
     .nav-link:hover{
     border-bottom: none;
     border-bottom-right-radius: 2px;
@@ -221,8 +224,12 @@
     .article-title {
     color: #595a60;
     font-weight: normal;
-    font-size: 22px;
+    /* font-size: 22px; */
     }
+    form .search-box {
+    width: 17rem!important;
+    margin-right: 1px;
+  }
 
   }
     </style>
@@ -240,6 +247,7 @@
             <div class="navbar-nav mr-auto">
               <a class="nav-item nav-link" href="{{ url_for('home') }}">Home</a>
               <a class="nav-item nav-link" href="{{ url_for('about') }}">About</a>
+              <a class="nav-item nav-link" href="{{ url_for('favourite') }}">Favourites</a>
             </div>
             <form method="POST" action="/search" class="form-inline my-2 my-lg-0 form-group">
               <input class="form-control mr-sm-2 search-box" type="search" placeholder="Search your question :/" name="search" aria-label="Search">
@@ -282,7 +290,7 @@
               <p class='text-muted'>Public <i class="fas fa-globe-americas"></i>
                 <ul class="list-group">
                   <a href="{{url_for('most_liked')}}"><li class="list-group-item list-group-item-light sidebar">Most Liked</li></a> 
-                  <a><li class="list-group-item list-group-item-light sidebar">Tags</li></a> 
+                  <a href="{{ url_for('user_posts', username=current_user.username) }}"><li class="list-group-item list-group-item-light sidebar">My Posts</li></a> 
                   <a><li class="list-group-item list-group-item-light sidebar">Users</li></a>
                 </ul>
               </p>
