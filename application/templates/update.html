@@ -16,10 +16,10 @@
         <div id="content-error-dialog"></div>
 
         <label for="">Tags</label>
-        <select class="form-control js-example-tokenizer js-example-basic-multiple mt-2" style="width:100%" multiple="multiple" name="tags" data-validation="required" data-validation="length" data-validation-length="max2" data-validation-error-msg-container="#tags-error-dialog" value="HAHAHA">
-            <option>Python</option>
-            <option>Vue Js</option>
-            <option>Flask</option>
+        <select class="form-control js-example-tokenizer js-example-basic-multiple mt-2" style="width:100%" multiple="multiple" name="tags" data-validation="required" data-validation="length" data-validation-length="max2" data-validation-error-msg-container="#tags-error-dialog" value="HAHAHA"pre>
+            {% for tags in taglist %}
+                <option value = "{{tags['tag_title']}}">{{tags['tag_title']}}</option>
+            {% endfor %}
         </select>
         <div id="tags-error-dialog"></div>
 

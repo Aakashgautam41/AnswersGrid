@@ -16,10 +16,10 @@
         <div id="content-error-dialog"></div>
 
         <label for="">Tags</label>
-        <select class="form-control js-example-tokenizer js-example-basic-multiple mt-2" style="width:100%" multiple="multiple" name="tags" data-validation="length" data-validation-length="max2" data-validation="required"  data-validation-error-msg-container="#tags-error-dialog" id="tagId">
-            <option>Python</option>
-            <option>Vue Js</option>
-            <option>Flask</option>
+        <select class="form-control js-example-tokenizer js-example-basic-multiple mt-2" style="width:100%" multiple="multiple" name="tags" data-validation="required"  data-validation-error-msg-container="#tags-error-dialog" id="tagId">
+            {% for tags in taglist %}
+                <option>{{tags['tag_title']}}</option>
+            {% endfor %}
         </select>
         <div id="tags-error-dialog"></div>
 
@@ -42,6 +42,11 @@
                 tags: true,
                 tokenSeparators: [',', ' ']
             });
+            // $('.js-example-tokenizer').select2({
+            //     $.get('/tags/taglist', function(data){
+            //         console.log(data);
+            //     })
+            // });
         });
         
         console.log("Hello World !");
@@ -50,6 +55,8 @@
         $('#submit-btn').click(function(){
             console.log($('#tagId').length);
         });
+
+
         
     </script>
 </div>

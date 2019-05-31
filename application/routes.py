@@ -1,3 +1,4 @@
+import requests as req
 from flask import render_template, url_for, flash, redirect, request, abort, jsonify
 from application import app, db, bcrypt
 from application.forms import RegistrationForm, LoginForm, UpdateAccountForm, PostForm, CommentForm, RequestResetForm, ResetPasswordForm
@@ -5,12 +6,34 @@ from application.models import User, Post, Answer, Comment, Vote, Downvote, Tags
 from flask_login import login_user, current_user, logout_user, login_required
 import secrets
 import os
+import sqlite3
 from PIL import Image
 from sqlalchemy.sql import exists
 from sqlalchemy import func
 from sqlalchemy import and_, or_
 from sqlalchemy import create_engine
 # from flask_mail import Message
+
+
+
+def dict_factory(cursor, row):
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
+
+
+def create_connection(db_file):
+    try:
+        conn = sqlite3.connect("application/" + db_file, isolation_level=None)
+        conn.row_factory = dict_factory
+        cursor = conn.cursor()
+        return cursor
+
+    except Exception as e:
+        print(e)
+
+
 
 # ---------- Home route ---------
 @app.route("/")
@@ -22,7 +45,7 @@ def home():
 
     # Join tables (tagposts, Tags and Post) to get tags for each post
     joinedTables = db.session.query(tagposts.post_id,tagposts.tag_id,Tags.tag_title,Post.title,Post.user_id,Post.like_count,Post.content).join(Tags).join(Post).all()
-    # print(joinedTables)
+    print(Post.query.order_by(Post.date_posted.desc()))
 
 
     return render_template('home.html', posts=posts, voted=voted, joinedTables=joinedTables)
@@ -162,35 +185,61 @@ def new_post():
         post = Post(title=request.form.get('title'), content=request.form.get('content'), author=current_user)
         db.session.add(post)
         db.session.commit()
-
+        taglist = []
         # Get all tags on the post
         many_tags = request.form.getlist('tags')
-        print(len(many_tags))
+        # print(len(many_tags))
 
         for one_tag in many_tags:
-            print(one_tag)
-            tag = Tags(tag_title=one_tag)
-            db.session.add(tag)
-            db.session.commit()
+            # print(one_tag)
+           
+            # check if tag is  present in table
+            tag_present = db.session.query(db.exists().where(and_(Tags.tag_title == one_tag))).scalar()
+            if tag_present:
+                tag_row = db.session.query(Tags).filter_by(tag_title=one_tag).all()
+                # tagid of old tags in a taglist
+                for item in tag_row:
+                    taglist.append(item.tag_id)
+            else:
+                tag = Tags(tag_title=one_tag)
+                db.session.add(tag)
+                db.session.commit()
+                tag_row = db.session.query(Tags).filter_by(tag_title=one_tag).all()
+                for item in tag_row:
+                    taglist.append(item.tag_id)
+        print("taglist: ", taglist)
         # flash("Your question has been posted","success")
 
         recent_post = Post.query.order_by(Post.date_posted.desc()).first()
         post_id = recent_post.id
 
-        recent_tags = Tags.query.order_by(Tags.tag_id.desc()).limit(len(many_tags)).all()
-        print(recent_tags)
 
-        for tag in recent_tags: 
-            print(tag)
-            tag_id = tag.tag_id
-            something = tagposts(post_id=post_id, tag_id=tag_id)
+
+        for tag in taglist:
+            something = tagposts(post_id=post_id, tag_id=tag)
             db.session.add(something)
             db.session.commit()
-        return redirect(url_for('home'))
-    elif  request.method == 'GET':
-        return render_template('create_post.html', title='Ask Question', legend='Ask Question')
 
-    
+        # API Call
+        furl = "http://10.50.3.111:1234/api/revI9v2oxBFHOK57tNgJEQ/data_entry/item_tags"
+        params = {"uid": current_user.id, "itemid": post_id, "taglist": taglist}
+        print('params: ', params)
+        response = req.post(furl,params=params)
+        if str(response) == '<Response [200]>':
+            flash("Your post has been added", 'success')
+            return redirect(url_for('home'))
+        else:
+            print('api call error')
+            return redirect(url_for('home'))
+        
+    elif request.method == 'GET':
+        dbase = create_connection("site.db")
+        sql = 'select * from Tags'
+        try:
+            taglist = dbase.execute(sql).fetchall()
+        except Exception as e:
+            print(e)
+        return render_template('create_post.html', title='Ask Question', legend='Ask Question', taglist=taglist)
 
 
 # ---------- Posts route ---------
@@ -234,8 +283,9 @@ def update_post(post_id):
         # updated_post = Post.query.filter_by(post_id)
         # post_id = recent_post.id
 
-        recent_tags = Tags.query.order_by(Tags.tag_id.desc()).limit(len(many_tags)).all()
-        print(recent_tags)
+        # recent_tags = tagposts.query.filter_by(tagposts.post_id = ).all()
+
+        # print(recent_tags)
 
         for tag in recent_tags: 
             print(tag)
