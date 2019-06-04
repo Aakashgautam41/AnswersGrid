@@ -66,8 +66,24 @@ def register():
         user = User(username=form.username.data, email=form.email.data, password=hashed_password)
         db.session.add(user)
         db.session.commit()
-        flash('Your account has been created! You are now able to log in', 'success')
-        return redirect(url_for('login'))
+        # API call
+        furl = "http://10.50.3.111:1234/api/revI9v2oxBFHOK57tNgJEQ/data_entry/registered_users"
+        dbase = create_connection('site.db')
+        sql = 'select * from User where username = "{}"'.format(form.username.data)
+        try:
+            user = dbase.execute(sql).fetchall()
+        except Exception as e:
+            print(e)
+        uid = user[0]['id']
+        params = {"uid": uid}
+        response = req.post(furl,params=params)
+        if str(response) == '<Response [200]>':
+            flash('Your account has been created! You are now able to log in', 'success')
+            return redirect(url_for('login'))
+        else:
+            print('api call error')
+            return redirect(url_for('login'))
+        
     return render_template('register.html', title='Register', form=form)
 
 # ---------- Login route ---------
@@ -223,7 +239,6 @@ def new_post():
         # API Call
         furl = "http://10.50.3.111:1234/api/revI9v2oxBFHOK57tNgJEQ/data_entry/item_tags"
         params = {"uid": current_user.id, "itemid": post_id, "taglist": taglist}
-        print('params: ', params)
         response = req.post(furl,params=params)
         if str(response) == '<Response [200]>':
             flash("Your post has been added", 'success')
@@ -392,8 +407,13 @@ def upvote(post_id,user_id):
         Vote.query.filter_by(post_id=post_id, user_id=user_id).delete()
         Vote.action = "not-liked"
         db.session.commit()
-        # flash("Your vote has been removed.","success")
-
+        # API call
+        furl = "http://10.50.3.111:1234/api/revI9v2oxBFHOK57tNgJEQ/data_entry/user_action"
+        params = {"uid": user_id, "itemid": post_id, "action": 0}
+        response = req.post(furl,params=params)
+        if str(response) == '<Response [200]>':
+            flash("Your vote has been removed !!","success")
+        
         # Count all entries on that post
         upvoteCount = db.session.query(Vote).filter(Vote.post_id == post_id).count()
         posts.like_count = upvoteCount
@@ -452,7 +472,12 @@ def upvote(post_id,user_id):
         print(posts.like_count)
         print(posts)
         print("inside else")
-        return jsonify(db.session.query(Vote).filter(Vote.post_id == post_id).count())
+        # API call
+        furl = "http://10.50.3.111:1234/api/revI9v2oxBFHOK57tNgJEQ/data_entry/user_action"
+        params = {"uid": user_id, "itemid": post_id, "action": 1}
+        response = req.post(furl,params=params)
+        if str(response) == '<Response [200]>':
+            return jsonify(db.session.query(Vote).filter(Vote.post_id == post_id).count())
         
 
 # ---------- Downvote route ---------
@@ -477,7 +502,12 @@ def downvote(post_id,user_id):
         # If YES, Delete the entry
         Downvote.query.filter_by(post_id=post_id, user_id=user_id).delete()
         db.session.commit()
-        # flash("Your downvote has been removed !!","success")
+        # API call
+        furl = "http://10.50.3.111:1234/api/revI9v2oxBFHOK57tNgJEQ/data_entry/user_action"
+        params = {"uid": user_id, "itemid": post_id, "action": 0}
+        response = req.post(furl,params=params)
+        if str(response) == '<Response [200]>':
+            flash("Your downvote has been removed !!","success")
 
         # Count all entries on that post
         DownvoteCount = db.session.query(Downvote).filter(Downvote.post_id == post_id).count()
@@ -536,7 +566,12 @@ def downvote(post_id,user_id):
         print(db.session.query(Downvote).filter(Downvote.post_id == post_id).count())
         print(posts.dislike_count)
         print(posts)
-        return jsonify(db.session.query(Downvote).filter(Downvote.post_id == post_id).count())
+        # API call
+        furl = "http://10.50.3.111:1234/api/revI9v2oxBFHOK57tNgJEQ/data_entry/user_action"
+        params = {"uid": user_id, "itemid": post_id, "action": -1}
+        response = req.post(furl,params=params)
+        if str(response) == '<Response [200]>':
+            return jsonify(db.session.query(Downvote).filter(Downvote.post_id == post_id).count())
     
 
 # ---------- Tags route ---------

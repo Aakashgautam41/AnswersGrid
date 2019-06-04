@@ -12,7 +12,7 @@
             <p class="article-content comment more text-justify text-wrap text-muted">{{ post.content|safe }}</p>
 
             {% for tag in joinedTables %}
-            {% if post.id in tag %}
+            {% if post.id == tag[0] %}
             <a class="article-content tag-style text-justify" href="{{ url_for('tags', tag_title=tag.tag_title) }}">{{ tag.tag_title }}</a>
             {% endif %}
             {% endfor %}<hr>
