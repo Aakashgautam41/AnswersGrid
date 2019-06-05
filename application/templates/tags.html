@@ -21,6 +21,10 @@
                   <a><i class="fas fa-thumbs-down mr-1 btn upvote" id="/downvote/{{item.id}}/{{current_user.id}}" onclick="contentDisp(this);" >  {{ item.dislike_count }} </i></a>
                     
                   <a href="{{url_for('comment_post', post_id=item.id)}}"><i class="fas fa-comment-alt mr-1 btn text-dark"></i></a>
+
+                  <a href="{{url_for('favourite_post', post_id=item.id)}}"><i class="fas fa-heart mr-1 btn"></i></a>
+
+                  <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-show-count="false"></a>
                   {% else %}
                   <a href="{{url_for('login')}}"><i class="fas fa-thumbs-up mr-1 btn text-primary upvote"><span class="ml-2 likes-count">{{ item.like_count }}</span></i></a>
                   <a href="{{url_for('login')}}"><i class="fas fa-thumbs-down mr-1 btn text-dark"><span id="demo" class="ml-3">{{ item.like_count }}</i></a>

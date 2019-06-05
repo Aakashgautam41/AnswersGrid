@@ -13,7 +13,7 @@
             <p class="article-content more text-justify">{{ post.content }}</p>
             
             {% for tag in joinedTables %}
-            {% if post.id in tag %}
+            {% if post.id == tag[0] %}
             <a class="article-content tag-style text-justify" href="{{ url_for('tags', tag_title=tag.tag_title) }}">{{ tag.tag_title }}</a>
             {% endif %}
             {% endfor %}<hr>
@@ -26,6 +26,8 @@
                   <a><i class="fas fa-thumbs-down mr-1 btn upvote" id="/downvote/{{post.id}}/{{current_user.id}}" onclick="contentDisp(this);" >  {{ post.dislike_count }} </i></a>
                     
                   <a href="{{url_for('comment_post', post_id=post.id)}}"><i class="fas fa-comment-alt mr-1 btn text-dark"></i></a>
+
+                  <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-show-count="false"></a>
                   {% else %}
                   <a href="{{url_for('login')}}"><i class="fas fa-thumbs-up mr-1 btn text-primary upvote"><span class="ml-2 likes-count">{{ post.like_count }}</span></i></a>
                   <a href="{{url_for('login')}}"><i class="fas fa-thumbs-down mr-1 btn text-dark"><span id="demo" class="ml-3">{{ post.like_count }}</i></a>

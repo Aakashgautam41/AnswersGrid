@@ -1,5 +1,5 @@
 import requests as req
-import pandas as pd
+# import pandas as pd
 from flask import render_template, url_for, flash, redirect, request, abort, jsonify
 from application import app, db, bcrypt
 from application.forms import RegistrationForm, LoginForm, UpdateAccountForm, PostForm, CommentForm, RequestResetForm, ResetPasswordForm
@@ -63,22 +63,51 @@ def home():
                 else:
                     resp += x
             recommended_items = resp.split(',')
-            for x in recommended_items:
-                x = int(x)
+            # for x in recommended_items:
+            #     x = int(x)
 
-                print(x)
+            #     print(x)
                 # post = db.session.query(Post).filter_by(id=x).all()
                 # posts.append(posts)
                 # print(posts)
         
 
 
-    return render_template('home.html', posts=posts, joinedTables=joinedTables, recommended_items=recommended_items)
+    return render_template('home.html', posts=posts, joinedTables=joinedTables)
 
-# ---------- About route ---------
-@app.route("/about")
-def about():
-    return render_template('about.html', title='About')
+# ---------- Local Feed route ---------
+@app.route("/personal")
+def personal():
+    page = request.args.get('page',1,type=int)
+    posts = Post.query.order_by(Post.date_posted.desc()).paginate(page=page, per_page=5)
+    
+    # Join tables (tagposts, Tags and Post) to get tags for each post
+    joinedTables = db.session.query(tagposts.post_id,tagposts.tag_id,Tags.tag_title,Post.title,Post.user_id,Post.like_count,Post.content).join(Tags).join(Post).all()
+
+    if current_user.is_authenticated:
+        uid = current_user.id
+        # API call
+        furl = "http://mayankms02.pythonanywhere.com/api/sCLAzIJDKmi1SfWLeapXYA/data_delivery/tag_item"
+        params = {"uid": uid}
+        response = req.post(furl,params=params)
+        if str(response) == '<Response [200]>':
+            resp = ""
+            for x in response.text :
+                if x == '[' or x == ']' or x == " " or x == '\n':
+                    continue
+                else:
+                    resp += x
+            recommended_items = resp.split(',')
+            print(recommended_items)
+            for x in recommended_items:
+                
+                post = db.session.query(Post).filter_by(id=x).all()
+                print(x)
+                print(post)
+        
+
+                # post = db.session.query(Post).all()
+                return render_template('personal.html', posts=posts, joinedTables=joinedTables, post=post, recommended_items=recommended_items)
 
 # ---------- Register route ---------
 @app.route("/register", methods=['GET', 'POST'])
@@ -325,12 +354,6 @@ def update_post(post_id):
             db.session.add(tag)
             db.session.commit()
         flash('Your question has been updated', 'success')
-        # updated_post = Post.query.filter_by(post_id)
-        # post_id = recent_post.id
-
-        # recent_tags = tagposts.query.filter_by(tagposts.post_id = ).all()
-
-        # print(recent_tags)
 
         for tag in recent_tags: 
             print(tag)
@@ -339,10 +362,18 @@ def update_post(post_id):
             db.session.add(something)
             db.session.commit()
         return redirect(url_for('home'))
+
     # Populate form with current post data
     elif request.method == 'GET':
+
+        dbase = create_connection("site.db")
+        sql = 'select * from Tags'
+        try:
+            taglist = dbase.execute(sql).fetchall()
+        except Exception as e:
+            print(e)
       
-        return render_template('update.html', post=post_dict, joinedTables=joinedTables, title='Update Post', legend='Edit Your Question')
+        return render_template('update.html', post=post_dict, joinedTables=joinedTables, title='Update Post', legend='Edit Your Question', taglist=taglist)
 
 # ---------- Delete Post route ---------
 @app.route("/post/<int:post_id>/delete", methods=['POST'])

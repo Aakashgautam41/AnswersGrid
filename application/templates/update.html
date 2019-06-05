@@ -17,10 +17,11 @@
 
         <label for="">Tags</label>
         <select class="form-control js-example-tokenizer js-example-basic-multiple mt-2" style="width:100%" multiple="multiple" name="tags" data-validation="required" data-validation-error-msg-container="#tags-error-dialog" data-validation-error-msg="Tags are required
-        ">
-            {% for tags in taglist %}
-                <option value = "{{tags['tag_title']}}">{{tags['tag_title']}}</option>
-            {% endfor %}
+        ">  
+        {% for tags in taglist %}
+        <option>{{tags['tag_title']}}</option>
+        {% endfor %}
+    
         </select>
         <div id="tags-error-dialog"></div>
 

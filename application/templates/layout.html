@@ -239,8 +239,11 @@
           <div class="collapse navbar-collapse" id="navbarToggle">
             <div class="navbar-nav mr-auto">
               <a class="nav-item nav-link" href="{{ url_for('home') }}">Home</a>
-              <a class="nav-item nav-link" href="{{ url_for('about') }}">About</a>
+              {%  if current_user.is_authenticated %}
+              <a class="nav-item nav-link" href="{{ url_for('personal') }}">Local Feed</a>
               <a class="nav-item nav-link" href="{{ url_for('favourite') }}">Favourites</a>
+              {% endif %}
+              
             </div>
             <form method="POST" action="/search" class="form-inline my-2 my-lg-0 form-group">
               <input class="form-control mr-sm-2 search-box" type="search" placeholder="Search your question :/" name="search" aria-label="Search">

@@ -11,11 +11,12 @@
             <h5 class="text-justify"><a class="article-title" href="{{ url_for('comment_post', post_id=post.post_id) }}">{{ post.title }}</a></h5>
             <p class="article-content more text-justify text-muted">{{ post.content}}</p>
 
-            <!-- {% for tag in joinedTables %}
-            {% if post.id in tag %}
+            {% for tag in joinedTables %}
+            {% if post.id == tag[0] %}
             <a class="article-content tag-style text-justify" href="{{ url_for('tags', tag_title=tag.tag_title) }}">{{ tag.tag_title }}</a>
             {% endif %}
-            {% endfor %}<hr> -->
+            {% endfor %}<hr>
+
           <hr> <div class="footRow">
             {%  if current_user.is_authenticated %}
 
@@ -24,8 +25,11 @@
               <a><i class="fas fa-thumbs-down mr-1 btn upvote" id="/downvote/{{post.post_id}}/{{current_user.id}}" onclick="contentDisp(this);" >  {{ post.dislike_count }} </i></a>
                 
               <a href="{{url_for('comment_post', post_id=post.post_id)}}"><i class="fas fa-comment-alt mr-1 btn text-dark"></i></a>
-              <!-- <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-show-count="false"></a> -->
+              
               <a href="{{url_for('delete_favourites', post_id=post.post_id)}}"><i class="fas fa-minus-circle mr-1 btn text-danger"></i></a>
+
+              <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-show-count="false"></a>
+              
               {% else %}
               <a href="{{url_for('login')}}"><i class="fas fa-thumbs-up mr-1 btn text-primary upvote"> {{ post.like_count }}</i></a>
               <a href="{{url_for('login')}}"><i class="fas fa-thumbs-down mr-1 btn"> {{ post.dislike_count }} </i></a>

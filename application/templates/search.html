@@ -18,11 +18,12 @@
                 <h4 class="article-title text-justify">{{ post.title }}</h4>
                 <p class="article-content more text-justify text-muted">{{ post.content }}</p>
                 
-                {% for tag in joinedTables %}
-                {% if post.id in tag %}
-                <a class="article-content tag-style text-justify" href="{{ url_for('tags', tag_title=tag.tag_title) }}">{{ tag.tag_title }}</a>
-                {% endif %}
-                {% endfor %}<hr>
+                {% for tag in joinedTables %} 
+                {% if post.id == tag[0] %}
+        
+                <a class="article-content tag-style text-justify" href="{{ url_for('tags', tag_title=tag.tag_title) }}">{{ tag.tag_title }}</a> 
+                {% endif %} 
+                {% endfor %} <hr>
 
                 <div class="footRow">
                     {%  if current_user.is_authenticated %}
