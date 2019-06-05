@@ -5,18 +5,19 @@
         <legend class="border-bottom mb-0">{{ legend }}</legend>
 
         <label for="">Title</label>
-        (<span id="max-length-element">100</span> chars left)
+        (<span id="max-length-element">100</span> characters left)
         <input type="text" class="form-control" id="textarea" placeholder="" name="title" data-validation="length" data-validation-length="10-100" data-validation-error-msg-container="#length-error-dialog" data-validation-error-msg="Title must be between 10-100 characters
         ">
         <div id="length-error-dialog"></div>
 
-        <label for="">Content</label>
-        <textarea class="form-control" id="exampleFormControlTextarea1" rows="5" name="content" data-validation="required" data-validation-error-msg-container="#content-error-dialog" data-validation-error-msg="Content field cannot be empty
+        <label for="">Description</label>
+        <textarea class="form-control" id="exampleFormControlTextarea1" rows="5" name="content" data-validation="required" data-validation-error-msg-container="#content-error-dialog" data-validation-error-msg="Description field cannot be empty
         "></textarea>
         <div id="content-error-dialog"></div>
 
         <label for="">Tags</label>
-        <select class="form-control js-example-tokenizer js-example-basic-multiple mt-2" style="width:100%" multiple="multiple" name="tags" data-validation="required"  data-validation-error-msg-container="#tags-error-dialog" id="tagId">
+        <select class="form-control js-example-tokenizer js-example-basic-multiple mt-2" style="width:100%" multiple="multiple" name="tags" data-validation="required"  data-validation-error-msg-container="#tags-error-dialog" id="tagId" data-validation-error-msg="Tags are required
+        ">
             {% for tags in taglist %}
                 <option>{{tags['tag_title']}}</option>
             {% endfor %}

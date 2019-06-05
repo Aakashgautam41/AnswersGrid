@@ -59,16 +59,27 @@
     {% endfor %}
     <script>
         function contentDisp(obj) {
-          var xhttp = new XMLHttpRequest();
-          xhttp.onreadystatechange = function() {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
             if (this.readyState == 4 && this.status == 200) {
-              document.getElementById(String($(obj).attr("id"))).innerHTML =
-              this.responseText;
+                var resp = JSON.parse(this.responseText);
+
+                this_id = String($(obj).attr("id"));
+                id_list = this_id.split('/')
+                if (id_list[1] == 'vote') {
+                    document.getElementById(String($(obj).attr("id"))).innerHTML = resp['vote_count'];
+                    id = '/downvote/' + id_list[2] + '/' + id_list[3];
+                    document.getElementById(id).innerHTML = resp['downvote_count'];
+                } else {
+                    document.getElementById(String($(obj).attr("id"))).innerHTML = resp['downvote_count'];
+                    id = '/vote/' + id_list[2] + '/' + id_list[3];
+                    document.getElementById(id).innerHTML = resp['vote_count'];
+                }
             }
-          };
-          var someurl = String($(obj).attr("id"));
-          xhttp.open("GET", someurl, true);
-          xhttp.send();
-        }
+        };
+        var someurl = String($(obj).attr("id"));
+        xhttp.open("GET", someurl, true);
+        xhttp.send();
+    }
     </script>
 {% endblock content %}

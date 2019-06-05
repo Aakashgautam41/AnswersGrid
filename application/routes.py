@@ -1,4 +1,5 @@
 import requests as req
+import pandas as pd
 from flask import render_template, url_for, flash, redirect, request, abort, jsonify
 from application import app, db, bcrypt
 from application.forms import RegistrationForm, LoginForm, UpdateAccountForm, PostForm, CommentForm, RequestResetForm, ResetPasswordForm
@@ -12,6 +13,7 @@ from sqlalchemy.sql import exists
 from sqlalchemy import func
 from sqlalchemy import and_, or_
 from sqlalchemy import create_engine
+import json
 # from flask_mail import Message
 
 
@@ -35,20 +37,43 @@ def create_connection(db_file):
 
 
 
-# ---------- Home route ---------
+# ---------- Home route ---------8
 @app.route("/")
 @app.route("/home")
 def home():
     page = request.args.get('page',1,type=int)
     posts = Post.query.order_by(Post.date_posted.desc()).paginate(page=page, per_page=5)
-    voted = Vote.query.order_by(Vote.post_id.desc())
+    
 
     # Join tables (tagposts, Tags and Post) to get tags for each post
     joinedTables = db.session.query(tagposts.post_id,tagposts.tag_id,Tags.tag_title,Post.title,Post.user_id,Post.like_count,Post.content).join(Tags).join(Post).all()
-    print(Post.query.order_by(Post.date_posted.desc()))
+    # posts = []
+
+    if current_user.is_authenticated:
+        uid = current_user.id
+        # API call
+        furl = "http://mayankms02.pythonanywhere.com/api/sCLAzIJDKmi1SfWLeapXYA/data_delivery/tag_item"
+        params = {"uid": uid}
+        response = req.post(furl,params=params)
+        if str(response) == '<Response [200]>':
+            resp = ""
+            for x in response.text :
+                if x == '[' or x == ']' or x == " " or x == '\n':
+                    continue
+                else:
+                    resp += x
+            recommended_items = resp.split(',')
+            for x in recommended_items:
+                x = int(x)
+
+                print(x)
+                # post = db.session.query(Post).filter_by(id=x).all()
+                # posts.append(posts)
+                # print(posts)
+        
 
 
-    return render_template('home.html', posts=posts, voted=voted, joinedTables=joinedTables)
+    return render_template('home.html', posts=posts, joinedTables=joinedTables, recommended_items=recommended_items)
 
 # ---------- About route ---------
 @app.route("/about")
@@ -66,8 +91,11 @@ def register():
         user = User(username=form.username.data, email=form.email.data, password=hashed_password)
         db.session.add(user)
         db.session.commit()
+        # flash('Your account has been created! You are now able to log in', 'success')
+
+
         # API call
-        furl = "http://10.50.3.111:1234/api/revI9v2oxBFHOK57tNgJEQ/data_entry/registered_users"
+        furl = "http://mayankms02.pythonanywhere.com/api/sCLAzIJDKmi1SfWLeapXYA/data_entry/registered_users"
         dbase = create_connection('site.db')
         sql = 'select * from User where username = "{}"'.format(form.username.data)
         try:
@@ -83,7 +111,8 @@ def register():
         else:
             print('api call error')
             return redirect(url_for('login'))
-        
+
+    #     return redirect(url_for('login'))
     return render_template('register.html', title='Register', form=form)
 
 # ---------- Login route ---------
@@ -237,8 +266,9 @@ def new_post():
             db.session.commit()
 
         # API Call
-        furl = "http://10.50.3.111:1234/api/revI9v2oxBFHOK57tNgJEQ/data_entry/item_tags"
+        furl = "http://mayankms02.pythonanywhere.com/api/sCLAzIJDKmi1SfWLeapXYA/data_entry/item_tags"
         params = {"uid": current_user.id, "itemid": post_id, "taglist": taglist}
+        print('params: ', params)
         response = req.post(furl,params=params)
         if str(response) == '<Response [200]>':
             flash("Your post has been added", 'success')
@@ -319,6 +349,8 @@ def update_post(post_id):
 @login_required
 def delete_post(post_id):
     post = Post.query.get_or_404(post_id)
+    Favourite.query.filter_by(post_id=post_id).delete()
+    db.session.commit()
     if post.author != current_user:
         abort(403)
     db.session.delete(post)
@@ -375,10 +407,6 @@ def comment_post(post_id):
 def search():
         page = request.args.get('page', 1, type=int)
         searched_content = request.form.get('search')
-
-        # Join tables (tagposts, Tags and Post) to get tags for each post
-        # joinedTables = db.session.query(tagposts.post_id,tagposts.tag_id,Tags.tag_title,Post.title,Post.user_id,Post.like_count,Post.content).join(Tags).join(Post).all()
-        # print(joinedTables)
         
         searched_posts = Post.query.filter(or_(Post.title.like('%'+searched_content+'%'),Post.content.like('%'+searched_content+'%'))).paginate(page=page, per_page=5)
 
@@ -405,37 +433,49 @@ def upvote(post_id,user_id):
 
         # If Yes, Delete the entry
         Vote.query.filter_by(post_id=post_id, user_id=user_id).delete()
-        Vote.action = "not-liked"
         db.session.commit()
+        
         # API call
-        furl = "http://10.50.3.111:1234/api/revI9v2oxBFHOK57tNgJEQ/data_entry/user_action"
+        furl = "https://mayankms02.pythonanywhere.com/api/sCLAzIJDKmi1SfWLeapXYA/data_entry/user_action"
         params = {"uid": user_id, "itemid": post_id, "action": 0}
         response = req.post(furl,params=params)
         if str(response) == '<Response [200]>':
-            flash("Your vote has been removed !!","success")
-        
+            print('API call successful')
+
         # Count all entries on that post
         upvoteCount = db.session.query(Vote).filter(Vote.post_id == post_id).count()
         posts.like_count = upvoteCount
         db.session.commit()
-        print(db.session.query(Vote).filter(Vote.post_id == post_id).count())
+        
         print(posts.like_count)
         print(posts)
         print("inside if")
-        return jsonify(db.session.query(Vote).filter(Vote.post_id == post_id).count())
 
-    # If entry is not already present in the table
+        upvote = db.session.query(Vote).filter(Vote.post_id == post_id).count()
+        downvote = db.session.query(Downvote).filter(Downvote.post_id == post_id).count()
+
+        vote_data = {'vote_count': upvote, 'downvote_count': downvote}
+        print('vote_data', vote_data)
+        return jsonify(vote_data)
+
+
+        # If entry is not already present in the table
     elif post_inDownvote == True:
         Downvote.query.filter_by(post_id=post_id, user_id=user_id).delete()
         print("Dislike Removed")
         db.session.commit()
         # Then add entry in the table
         vote = Vote(user_id=user_id, post_id=post_id)
-        vote.action = "liked"
+        vote.action = 1
         db.session.add(vote)
         db.session.commit()
-        # flash("Your vote has been registered.","success")
-        print(post_inDownvote)
+        
+        # API call
+        furl = "https://mayankms02.pythonanywhere.com/api/sCLAzIJDKmi1SfWLeapXYA/data_entry/user_action"
+        params = {"uid": user_id, "itemid": post_id, "action": 1}
+        response = req.post(furl,params=params)
+        if str(response) == '<Response [200]>':
+            print('API call successful')
 
         # Count all entries on that post
         upvoteCount = db.session.query(Vote).filter(Vote.post_id == post_id).count()
@@ -450,18 +490,25 @@ def upvote(post_id,user_id):
         print(posts.like_count)
         print(posts)
         print("inside elif")
-        print(db.session.query(Downvote).filter(Downvote.post_id == post_id).count())
-        print( posts.dislike_count)
+        upvote = db.session.query(Vote).filter(Vote.post_id == post_id).count()
+        downvote = db.session.query(Downvote).filter(Downvote.post_id == post_id).count()
 
-        return jsonify(db.session.query(Vote).filter(Vote.post_id == post_id).count())
+        vote_data = {'vote_count': upvote, 'downvote_count': downvote}
+        print('vote_data', vote_data)
+        return jsonify(vote_data)
     else:
-         # Then add entry in the table
+        # Then add entry in the table
         vote = Vote(user_id=user_id, post_id=post_id)
-        vote.action = "liked"
+        vote.action = 1
         db.session.add(vote)
         db.session.commit()
-        # flash("Your vote has been registered.","success")
-        print(post_present)
+        
+        # API call
+        furl = "https://mayankms02.pythonanywhere.com/api/sCLAzIJDKmi1SfWLeapXYA/data_entry/user_action"
+        params = {"uid": user_id, "itemid": post_id, "action": 1}
+        response = req.post(furl,params=params)
+        if str(response) == '<Response [200]>':
+            print('API call successful')
 
         # Count all entries on that post
         upvoteCount = db.session.query(Vote).filter(Vote.post_id == post_id).count()
@@ -472,12 +519,12 @@ def upvote(post_id,user_id):
         print(posts.like_count)
         print(posts)
         print("inside else")
-        # API call
-        furl = "http://10.50.3.111:1234/api/revI9v2oxBFHOK57tNgJEQ/data_entry/user_action"
-        params = {"uid": user_id, "itemid": post_id, "action": 1}
-        response = req.post(furl,params=params)
-        if str(response) == '<Response [200]>':
-            return jsonify(db.session.query(Vote).filter(Vote.post_id == post_id).count())
+        upvote = db.session.query(Vote).filter(Vote.post_id == post_id).count()
+        downvote = db.session.query(Downvote).filter(Downvote.post_id == post_id).count()
+
+        vote_data = {'vote_count': upvote, 'downvote_count': downvote}
+        print('vote_data', vote_data)
+        return jsonify(vote_data)
         
 
 # ---------- Downvote route ---------
@@ -494,29 +541,30 @@ def downvote(post_id,user_id):
 
     if post_present == True:
         print("All ready downvoted")
-        print(post_id)
-        print(user_id)
         print(post_present)
-    
-
+        
         # If YES, Delete the entry
         Downvote.query.filter_by(post_id=post_id, user_id=user_id).delete()
         db.session.commit()
+        
         # API call
-        furl = "http://10.50.3.111:1234/api/revI9v2oxBFHOK57tNgJEQ/data_entry/user_action"
+        furl = "https://mayankms02.pythonanywhere.com/api/sCLAzIJDKmi1SfWLeapXYA/data_entry/user_action"
         params = {"uid": user_id, "itemid": post_id, "action": 0}
         response = req.post(furl,params=params)
         if str(response) == '<Response [200]>':
-            flash("Your downvote has been removed !!","success")
+            print('API call successful')
 
         # Count all entries on that post
         DownvoteCount = db.session.query(Downvote).filter(Downvote.post_id == post_id).count()
         posts.dislike_count = DownvoteCount
         db.session.commit()
-        print(db.session.query(Downvote).filter(Downvote.post_id == post_id).count())
-        print(posts.dislike_count)
-        print(posts)
-        return jsonify(db.session.query(Downvote).filter(Downvote.post_id == post_id).count())
+        
+        upvote = db.session.query(Vote).filter(Vote.post_id == post_id).count()
+        downvote = db.session.query(Downvote).filter(Downvote.post_id == post_id).count()
+
+        vote_data = {'vote_count': upvote, 'downvote_count': downvote}
+        print('vote_data', vote_data)
+        return jsonify(vote_data)
 
     # If entry is not already present in the table
     elif post_inVote == True:
@@ -529,8 +577,14 @@ def downvote(post_id,user_id):
         downvote.action = "disliked"
         db.session.add(downvote)
         db.session.commit()
-        # flash("Your vote has been registered.","success")
-        print(post_inVote)
+        
+
+        # API call
+        furl = "https://mayankms02.pythonanywhere.com/api/sCLAzIJDKmi1SfWLeapXYA/data_entry/user_action"
+        params = {"uid": user_id, "itemid": post_id, "action": -1}
+        response = req.post(furl,params=params)
+        if str(response) == '<Response [200]>':
+            print('API call successful')
 
         # Count all entries on that post
         downvoteCount = db.session.query(Downvote).filter(Downvote.post_id == post_id).count()
@@ -545,33 +599,37 @@ def downvote(post_id,user_id):
         print(posts.dislike_count)
         print(posts)
         print("inside elif")
-        print(db.session.query(Vote).filter(Vote.post_id == post_id).count())
-        print( posts.like_count)
+        upvote = db.session.query(Vote).filter(Vote.post_id == post_id).count()
+        downvote = db.session.query(Downvote).filter(Downvote.post_id == post_id).count()
 
-        return jsonify(db.session.query(Downvote).filter(Downvote.post_id == post_id).count())
+        vote_data = {'vote_count': upvote, 'downvote_count': downvote}
+        print('vote_data', vote_data)
+        return jsonify(vote_data)
 
     else:
         # Then add entry in the table
         downvote = Downvote(user_id=user_id, post_id=post_id)
-        downvote.action = "disliked"
+        downvote.action = -1
         db.session.add(downvote)
         db.session.commit()
-        # flash("You have disliked the post","success")
-        print(post_present)
+
+        # API call
+        furl = "https://mayankms02.pythonanywhere.com/api/sCLAzIJDKmi1SfWLeapXYA/data_entry/user_action"
+        params = {"uid": user_id, "itemid": post_id, "action": -1}
+        response = req.post(furl,params=params)
+        if str(response) == '<Response [200]>':
+            print('API call successful')
 
         # Count all entries on that post
         downvoteCount = db.session.query(Downvote).filter(Downvote.post_id == post_id).count()
         posts.dislike_count = downvoteCount
         db.session.commit()
-        print(db.session.query(Downvote).filter(Downvote.post_id == post_id).count())
-        print(posts.dislike_count)
-        print(posts)
-        # API call
-        furl = "http://10.50.3.111:1234/api/revI9v2oxBFHOK57tNgJEQ/data_entry/user_action"
-        params = {"uid": user_id, "itemid": post_id, "action": -1}
-        response = req.post(furl,params=params)
-        if str(response) == '<Response [200]>':
-            return jsonify(db.session.query(Downvote).filter(Downvote.post_id == post_id).count())
+        upvote = db.session.query(Vote).filter(Vote.post_id == post_id).count()
+        downvote = db.session.query(Downvote).filter(Downvote.post_id == post_id).count()
+
+        vote_data = {'vote_count': upvote, 'downvote_count': downvote}
+        print('vote_data', vote_data)
+        return jsonify(vote_data)
     
 
 # ---------- Tags route ---------
