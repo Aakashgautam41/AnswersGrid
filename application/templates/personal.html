@@ -1,7 +1,8 @@
 {% extends "layout.html" %} 
 {% block content %}
 {% for x in recommended_items %}
-{% for post in post %}
+{% for post in posts.items %}
+{% if  post.id == x %}
 <article class="media content-section">
     <div class="media-body">
         <img class="rounded-circle article-img" src="{{ url_for('static', filename='profile_pics/' + post.author.image_file) }}">
@@ -38,10 +39,11 @@
         </div>
     </div>
 </article>
+{% endif %}
 {% endfor %}
 {% endfor %}
 
-<!-- {% for page_num in posts.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+{% for page_num in posts.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
 {% if page_num %}
   {% if posts.page == page_num %}
     <a class="btn btn-info mb-4" href="{{ url_for('home', page=page_num) }}">{{ page_num }}</a>
@@ -51,7 +53,7 @@
 {% else %}
 ...
 {% endif %}
-{% endfor %} -->
+{% endfor %}
 
 
 <script>

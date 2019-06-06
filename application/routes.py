@@ -1,7 +1,6 @@
 import requests as req
-# import pandas as pd
 from flask import render_template, url_for, flash, redirect, request, abort, jsonify
-from application import app, db, bcrypt
+from application import app, db, bcrypt, mail
 from application.forms import RegistrationForm, LoginForm, UpdateAccountForm, PostForm, CommentForm, RequestResetForm, ResetPasswordForm
 from application.models import User, Post, Answer, Comment, Vote, Downvote, Tags, tagposts, Answerupvotes, Answerdownvotes, Favourite
 from flask_login import login_user, current_user, logout_user, login_required
@@ -14,7 +13,7 @@ from sqlalchemy import func
 from sqlalchemy import and_, or_
 from sqlalchemy import create_engine
 import json
-# from flask_mail import Message
+from flask_mail import Message
 
 
 
@@ -47,33 +46,42 @@ def home():
 
     # Join tables (tagposts, Tags and Post) to get tags for each post
     joinedTables = db.session.query(tagposts.post_id,tagposts.tag_id,Tags.tag_title,Post.title,Post.user_id,Post.like_count,Post.content).join(Tags).join(Post).all()
-    # posts = []
+    
+    recommended_items_default = []
+    items = db.session.query(Post).order_by(Post.date_posted.desc()).all()
+    if not items:
+        recommended_items_default.clear()
+    
+    else:
+        for x in items:
+            recommended_items_default.append(x.id)
+        print('default', recommended_items_default)
 
     if current_user.is_authenticated:
+        print('in auth')
         uid = current_user.id
-        # API call
+        print('uid: ', uid)
+         # API call
         furl = "http://mayankms02.pythonanywhere.com/api/sCLAzIJDKmi1SfWLeapXYA/data_delivery/tag_item"
         params = {"uid": uid}
         response = req.post(furl,params=params)
         if str(response) == '<Response [200]>':
-            resp = ""
-            for x in response.text :
-                if x == '[' or x == ']' or x == " " or x == '\n':
-                    continue
-                else:
-                    resp += x
-            recommended_items = resp.split(',')
-            # for x in recommended_items:
-            #     x = int(x)
+            print(response.text)
+            print('resp 200')
+            
+            recommended_items = json.loads(response.text)
+            if not recommended_items:
+                flash("No posts on the site, Add a post to start!", 'info')
+                return redirect('/post/new')
+               
+            else:
+                return render_template('home.html', posts=posts, joinedTables=joinedTables, recommended_items=recommended_items)
+        else:
+            print(response)
+            return jsonify("error")
 
-            #     print(x)
-                # post = db.session.query(Post).filter_by(id=x).all()
-                # posts.append(posts)
-                # print(posts)
-        
-
-
-    return render_template('home.html', posts=posts, joinedTables=joinedTables)
+    else:
+        return render_template('home.html', posts=posts, recommended_items=recommended_items_default, joinedTables=joinedTables)
 
 # ---------- Local Feed route ---------
 @app.route("/personal")
@@ -86,6 +94,7 @@ def personal():
 
     if current_user.is_authenticated:
         uid = current_user.id
+        
         # API call
         furl = "http://mayankms02.pythonanywhere.com/api/sCLAzIJDKmi1SfWLeapXYA/data_delivery/tag_item"
         params = {"uid": uid}
@@ -98,7 +107,10 @@ def personal():
                 else:
                     resp += x
             recommended_items = resp.split(',')
-            print(recommended_items)
+            int_recommended_list = []
+            for x in recommended_items:
+                int_recommended_list.append(int(x))
+            print(int_recommended_list)
             for x in recommended_items:
                 
                 post = db.session.query(Post).filter_by(id=x).all()
@@ -107,7 +119,7 @@ def personal():
         
 
                 # post = db.session.query(Post).all()
-                return render_template('personal.html', posts=posts, joinedTables=joinedTables, post=post, recommended_items=recommended_items)
+                return render_template('personal.html', posts=posts, joinedTables=joinedTables, post=post, recommended_items=int_recommended_list)
 
 # ---------- Register route ---------
 @app.route("/register", methods=['GET', 'POST'])
@@ -386,6 +398,14 @@ def delete_post(post_id):
         abort(403)
     db.session.delete(post)
     db.session.commit()
+
+    # API call
+    furl = "http://mayankms02.pythonanywhere.com/api/sCLAzIJDKmi1SfWLeapXYA/data_deletion/delete_item"
+    params = {"itemid": post_id}
+    response = req.post(furl,params=params)
+    if str(response) == '<Response [200]>':
+        print("Item is deleted successfuly")
+
     flash('Your question has been deleted', 'success')
     return redirect(url_for('home'))
 

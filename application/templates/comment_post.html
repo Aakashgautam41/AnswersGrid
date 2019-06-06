@@ -16,7 +16,7 @@
         <h4 class="article-title text-justify">{{ post.title }}</h4>
         <p class="article-content text-justify text-muted">{{ post.content }}</p>
         {% for tag in joinedTables %}
-            {% if post.id in tag %}
+            {% if post.id == tag[0] %}
             <a class="article-content tag-style text-justify" href="{{ url_for('tags', tag_title=tag.tag_title) }}">{{ tag.tag_title }}</a>
             {% endif %}
         {% endfor %}<hr>
@@ -193,7 +193,6 @@
           </form>
           
     </div>
-
     <!-- Javascript Section -->
     <script>
         function contentDisp(obj) {
@@ -218,7 +217,7 @@
         var someurl = String($(obj).attr("id"));
         xhttp.open("GET", someurl, true);
         xhttp.send();
-    }
+        }
         function AnswerVotes(obj) {
           var xhttp = new XMLHttpRequest();
           xhttp.onreadystatechange = function() {
@@ -246,7 +245,6 @@
               $('.alert-success').hide();
           }, 1000);
         });
-
 
     </script>
 {% endblock content %}
