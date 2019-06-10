@@ -39,6 +39,21 @@
       line-height: 1.5;
       font-family: Arial;
     }
+    .form-check-input {
+    position:relative;
+    margin-top: .3rem;
+    margin-left: -1.25rem;
+    }
+     .fa-searchBtn{
+    margin-left: -44px;
+    background: #6d747c;
+    padding: 7px;
+    height:35px;
+    padding-left: 15px;
+    padding-right: -25px;
+    border-radius: 2px;
+    border: none;
+  }
 
   .form-control {
       display: block;
@@ -222,6 +237,9 @@
     font-weight: normal;
     font-size: 22px;
     }
+    .fa-searchBtn{
+    display:none;
+  }
 
   }
 </style>
@@ -242,11 +260,11 @@
               <!-- <a class="nav-item nav-link" href="{{ url_for('personal') }}">Local Feed</a> -->
               <a class="nav-item nav-link" href="{{ url_for('favourite') }}">Favourites</a>
               {% endif %}
-              
+
             </div>
             <form method="POST" action="/search" class="form-inline my-2 my-lg-0 form-group">
               <input class="form-control mr-sm-2 search-box" type="search" placeholder="Search your question :/" name="search" aria-label="Search">
-              <button class="btn bg-secondary text-white mr-2" type="submit"><i class="fas fa-search"></i></button>
+              <button class="btn bg-secondary text-white mr-2 fa-searchBtn" type="submit"><i class="fas fa-search"></i></button>
              </form>
             <!-- Navbar Right Side -->
             <div class="navbar-nav">
@@ -280,15 +298,20 @@
           {% block content %}{% endblock %}
         </div>
         <div class="col-md-4">
-          <div class="content-section">
+            <div class="content-section">
               <h3>AnswersGrid Sidebar </h3>
-              <p class='text-muted'>Public <i class="fas fa-globe-americas"></i>
+              <p class='text-muted'>Categories | <i class="fas fa-crown"></i>
                 <ul class="list-group">
-                  <a href="{{url_for('most_liked')}}"><li class="list-group-item list-group-item-light sidebar">Most Liked</li></a>
+                  {%  if current_user.is_authenticated %}
                   <a href="{{ url_for('user_posts', username=current_user.username) }}"><li class="list-group-item list-group-item-light sidebar">My Posts</li></a>
+                  <a href="{{url_for('most_liked')}}"><li class="list-group-item list-group-item-light sidebar">Most Liked</li></a>
+                  {% else %}
+                  <a href="{{ url_for('login') }}"><li class="list-group-item list-group-item-light sidebar">My Posts</li></a>
+                  <a href="{{url_for('most_liked')}}"><li class="list-group-item list-group-item-light sidebar">Most Liked</li></a>
+                  {% endif %}
                 </ul>
               </p>
-          </div>
+            </div>
           </div>
         </div>
       </div>

@@ -16,6 +16,7 @@ import json
 from flask_mail import Message
 
 
+
 def dict_factory(cursor, row):
     d = {}
     for idx, col in enumerate(cursor.description):
@@ -35,7 +36,7 @@ def create_connection(db_file):
 
 
 
-# ---------- Home route ---------8
+# ---------- Home route ---------
 @app.route("/")
 @app.route("/home")
 def home():
@@ -442,7 +443,7 @@ def comment_post(post_id):
     answersCount = db.session.query(Answer).filter(Answer.post_id == post_id).count()
 
     # Get all answers from Answer table
-    answers = Answer.query.order_by(Answer.date_posted.desc()).all()
+    answers = Answer.query.order_by(Answer.like_count.desc()).all()
 
     if request.method == 'POST':
         comment = Comment(comment=request.form.get('comment'), post_id=posts_id, user_id=current_user.id)
@@ -727,7 +728,6 @@ def delete_comment(post_id,comment_id):
             db.session.commit()
             # flash('Comment has been deleted', 'success')
             return redirect(url_for('comment_post', post_id=post_id))
-        # return jsonify('check logs')
 
 # ---------- Answer route ---------
 @app.route("/answer/<int:post_id>", methods=['GET', 'POST'])
@@ -743,6 +743,21 @@ def answer(post_id):
 
         return redirect(url_for('comment_post', post_id=post_id))
 
+    return redirect(url_for('comment_post', post_id=post_id))
+
+# ---------- Delete Answer route ---------
+@app.route("/answer/<int:answer_id>/delete", methods=['POST'])
+@login_required
+def delete_answer(answer_id):
+    answer = Answer.query.get_or_404(answer_id)
+    post_id = answer.post_id
+    print(answer.author)
+    print(current_user)
+    if answer.author != current_user:
+        abort(403)
+    db.session.delete(answer)
+    db.session.commit()
+    flash('Your answer has been deleted', 'success')
     return redirect(url_for('comment_post', post_id=post_id))
 
 # ---------- Answer Comment route ---------
@@ -766,21 +781,6 @@ def answercomment(answer_id):
         comments = AnswerComment.query.filter(AnswerComment.answer_id == answer_id).all()
         return render_template('answer_comment.html', title='Comments', form=form, comments=comments, answer=answer)
 
-
-# ---------- Delete Answer route ---------
-@app.route("/answer/<int:answer_id>/delete", methods=['POST'])
-@login_required
-def delete_answer(answer_id):
-    answer = Answer.query.get_or_404(answer_id)
-    post_id = answer.post_id
-    print(answer.author)
-    print(current_user)
-    if answer.author != current_user:
-        abort(403)
-    db.session.delete(answer)
-    db.session.commit()
-    flash('Your answer has been deleted', 'success')
-    return redirect(url_for('comment_post', post_id=post_id))
 
 # ---------- Mostliked route ---------
 @app.route('/most_liked')

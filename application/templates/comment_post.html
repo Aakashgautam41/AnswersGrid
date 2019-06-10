@@ -22,22 +22,21 @@
         {% endfor %}<hr>
             <div class="footRow">
                 {%  if current_user.is_authenticated %}
-    
+
                   <a><i class="fas fa-thumbs-up mr-1 btn upvote"id="/vote/{{post.id}}/{{current_user.id}}" onclick="contentDisp(this);">  {{ post.like_count }} </i></a>
-    
+
                   <a><i class="fas fa-thumbs-down mr-1 btn upvote" id="/downvote/{{post.id}}/{{current_user.id}}" onclick="contentDisp(this);" >  {{ post.dislike_count }} </i></a>
-                    
+
                   <a href="#commenticon"><i class="fas fa-comment-alt mr-1 btn text-dark" id="comment-btn"></i></a>
                   <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-show-count="false"></a>
-         
                   {% else %}
                   <a href="{{url_for('login')}}"><i class="fas fa-thumbs-up mr-1 btn text-primary upvote"><span class="ml-2 likes-count">{{ post.like_count }}</span></i></a>
                   <a href="{{url_for('login')}}"><i class="fas fa-thumbs-down mr-1 btn text-dark"><span id="demo" class="ml-3">{{ post.like_count }}</i></a>
                   <a href="{{url_for('comment_post', post_id=post.id)}}"><i class="fas fa-comment-alt mr-1 btn text-dark"></i></a>
-    
+
                 {% endif %}
             </div>
-      </div> 
+      </div>
     </article>
 
     <!-- Modal Delete Post-->
@@ -83,59 +82,45 @@
     </div>
     {% endfor %}
 
-
-
-    
     <!-- Comment Section -->
     <div class="content-section hide-comments">
-        <form method="POST" id="comment-form" action="">
-          <div class="form-group">
-              <textarea class="form-control form-control-lg" id="comment-box" name="comment" required=""></textarea>
-              <button class="btn btn-outline-info" type="submit">Comment</button>
-          </div>
+      <form method="POST" id="comment-form" action="">
+        <div class="form-group">
+            <textarea class="form-control form-control-lg" id="comment-box" name="comment" required=""></textarea>
+            <button class="btn btn-outline-info" type="submit">Comment</button>
+        </div>
+      </form> <hr>
+      {% for comment in comments %}
+            <div>
+              <p class="comment text-justify text-muted">{{ comment.comment }} <small>-  <a href="{{ url_for('user_posts', username=comment.author.username) }}">{{ comment.author.username }}</a> on {{ comment.date_posted.strftime('%d-%m-%Y') }} </small>
+          
+              {% if post.author == current_user  %}
+              <a class=" ml-2 deleteComment-btn text-danger" id="{{comment.comment_id}}"><i class="fas fa-trash-alt"></i></a></p>
 
-        </form> <hr>
-        {% for comment in comments %}
-          <article>
-              <div>
-                <p class="comment text-justify text-muted">{{ comment.comment }} <small>-  <a href="{{ url_for('user_posts', username=comment.author.username) }}">{{ comment.author.username }}</a> on {{ comment.date_posted.strftime('%d-%m-%Y') }} </small>
-                
-                {% if post.author == current_user  %}
-                <a class=" ml-2 deleteComment-btn text-danger" id="{{comment.comment_id}}"><i class="fas fa-trash-alt"></i></a></p>
-
-                <!-- Modal Delete Comment -->
-                <div class="modal fade" id="deleteCommentModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel"    aria-hidden="true">
-                  <div class="modal-dialog" role="document">
-                    <div class="modal-content">
-                      <div class="modal-header">
-                        <h5 class="modal-title" id="deleteModalLabel">Delete Comment?</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                          <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-footer">
-                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                      
-                      <!-- <form action="{{ url_for('delete_comment', post_id=post.id, comment_id= comment.comment_id) }}" method="POST"> -->
-                      <button class="btn btn-danger" id="" onclick="deleteComment()">Delete</button>
-                      <!-- </form> -->
-                      
-                      
-                      </div>
+              <!-- Modal Delete Comment -->
+              <div class="modal fade" id="deleteCommentModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel"    aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="deleteModalLabel">Delete Comment?</h5>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button class="btn btn-danger" id="" onclick="deleteComment()">Delete</button>
                     </div>
                   </div>
                 </div>
-
-                {% else %}
-              
-                {% endif %}
-              </div><hr>
-              
-          </article>
-         {% endfor %}
+              </div>
+              {% else %}
+              {% endif %}
+            </div><hr>
+       {% endfor %}
     </div>
 
-    <!-- Answers Section -->
+   <!-- Answers Section -->
     <h4 class="answer-section">Answers -({{ answersCount }})</h4> <hr>
     {% for answer in answers %}
     {% if answer.post_id == post.id %}
@@ -146,25 +131,28 @@
             <a class="mr-2" href="{{ url_for('user_posts', username=answer.author.username) }}">{{ answer.author.username }}</a>
             <small class="text-muted">{{ post.date_posted.strftime('%d-%m-%Y') }}</small>
             {% if answer.author == current_user  %}
-  
+
                 <a class="btn btn-secondary btn-sm mt-1 mb-1 edit-btn" href="{{ url_for('update_answer', answer_id=answer.id, post_id=post.id)  }}">Edit</a>
                 <button type="button" class="btn btn-danger btn-sm m-1 delete-btn" data-toggle="modal" data-target="#deleteAnswerModal">Delete</button>
-  
+
             {% endif %}
           </div>
           <p class="article-content text-justify text-wrap text-break text-muted ">{{ answer.content|safe }}</p> <hr>
           <div class="footRow">
             {%  if current_user.is_authenticated %}
-  
+
               <a><i class="fas fa-thumbs-up mr-1 btn upvote" id="/AnswerUpvotes/{{answer.id}}/{{current_user.id}}" onclick="AnswerVotes(this);"> {{ answer.like_count }} </i></a>
+              
               <a><i class="fas fa-thumbs-down mr-1 btn" id="/AnswerDownvotes/{{answer.id}}/{{current_user.id}}" onclick="AnswerVotes(this);"> {{ answer.dislike_count }}</i></a>
+
               <a href="{{ url_for('answercomment', answer_id=answer.id) }}"><i class="fas fa-comment-alt mr-3 btn text-dark"></i></a>
+
               <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-show-count="false"></a>
               {% else %}
               <a href="#"><i class="fas fa-thumbs-up mr-1 btn text-primary upvote"><span class="ml-2 likes-count">{{ post.like_count }}</span></i></a>
               <a href="#"><i class="fas fa-thumbs-down btn"><span id="demo" class="ml-3">{{ post.dislike_count }}</i></a>
               <a href="#"><i class="fas fa-comment-alt mr-1 btn text-dark"></i></a>
-  
+
             {% endif %}
           </div>
         </div>
@@ -172,7 +160,6 @@
     {% endif %}
     {% endfor %}
 
-   
     <!-- Summernote Section -->
     <div class="summernote-section">
         <h4>Your Answer</h4>
@@ -180,11 +167,10 @@
             <textarea id="summernote" name="editordata" class="mt-5 mb-5" required></textarea>
             <button class="btn btn-primary mt-5 mb-5">Post Your Answer</button>
           </form>
-          
+
     </div>
     <!-- Javascript Section -->
     <script>
-        var post_id ="";
         function contentDisp(obj) {
         var xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function() {
@@ -212,8 +198,7 @@
           var xhttp = new XMLHttpRequest();
           xhttp.onreadystatechange = function() {
             if (this.readyState == 4 && this.status == 200) {
-              document.getElementById(String($(obj).attr("id"))).innerHTML =
-              this.responseText;
+              document.getElementById(String($(obj).attr("id"))).innerHTML = this.responseText;
             }
           };
           var someurl = String($(obj).attr("id"));
@@ -235,7 +220,6 @@
               $('.alert-success').hide();
           }, 1000);
         });
-     
         $(function(){
           $('a').click(function(){
             $("#deleteCommentModal").modal();
