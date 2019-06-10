@@ -17,6 +17,7 @@ class User(db.Model, UserMixin):
     posts = db.relationship('Post', backref='author', lazy=True)
     answers = db.relationship('Answer', backref="author", lazy=True)
     comments = db.relationship('Comment', backref='author', lazy=True)
+    answercomments = db.relationship('AnswerComment', backref='author', lazy=True)
     favourites = db.relationship('Favourite', backref='author', lazy=True)
 
     # Method to create token
@@ -36,7 +37,6 @@ class User(db.Model, UserMixin):
 
     def __repr__(self):
         return f"User('{self.username}', '{self.email}', '{self.image_file}')"
-
 
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -63,7 +63,6 @@ class Comment(db.Model):
 
     def __repr__(self):
         return f"Comment('{self.comment}', '{self.date_posted}')"
-
 
 class Vote(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -102,7 +101,6 @@ class tagposts(db.Model):
         return f"tagposts('{self.post_id}', '{self.tag_id}')"
 
 
-
 # Answers Models
 class Answer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -113,10 +111,21 @@ class Answer(db.Model):
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     comments = db.relationship('Comment', backref='commentsOnPost', lazy=True)
+    answercomments = db.relationship('AnswerComment', backref='commentsOnAnswer', lazy=True)
 
     def __repr__(self):
         return f"Answer('{self.content}',{self.date_posted}', '{self.like_count}','{self.post_id}', '{self.user_id}')"
 
+class AnswerComment(db.Model):
+    comment_id = db.Column(db.Integer, primary_key=True)
+    comment = db.Column(db.String(100), nullable=False)
+    date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    answer_id = db.Column(db.Integer, db.ForeignKey('answer.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+  
+
+    def __repr__(self):
+        return f"AnswerComment('{self.comment}', '{self.date_posted}')"
 class Answerupvotes(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer,nullable=False)

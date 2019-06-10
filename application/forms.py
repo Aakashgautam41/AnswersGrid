@@ -68,6 +68,10 @@ class CommentForm(FlaskForm):
     comment = TextAreaField(validators=[DataRequired(), Length(min=1, max=500)], label="Leave a comment")
     submit = SubmitField('Comment')
 
+class AnswerCommentForm(FlaskForm):
+    comment = TextAreaField(validators=[DataRequired(), Length(min=1, max=500)], label="Leave a comment")
+    submit = SubmitField('Comment')
+
 
 class RequestResetForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])

@@ -12,10 +12,10 @@
             <p class="article-content more text-justify text-muted">{{ post.content}}</p>
 
             {% for tag in joinedTables %}
-            {% if post.id == tag[0] %}
+            {% if tag.post_id == tag[0] %}
             <a class="article-content tag-style text-justify" href="{{ url_for('tags', tag_title=tag.tag_title) }}">{{ tag.tag_title }}</a>
             {% endif %}
-            {% endfor %}<hr>
+            {% endfor %}
 
           <hr> <div class="footRow">
             {%  if current_user.is_authenticated %}

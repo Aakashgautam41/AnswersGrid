@@ -1,0 +1,104 @@
+{% extends "layout.html" %}
+{% block content %}
+    <!-- Answers Section -->
+    <article class="media content-section">
+        <div class="media-body answerOverflow">
+          <div class="article-metadata">
+            <img class="rounded-circle article-img" src="{{ url_for('static', filename='profile_pics/' + answer.author.image_file) }}">
+            <a class="mr-2" href="{{ url_for('user_posts', username=answer.author.username) }}">{{ answer.author.username }}</a>
+            <small class="text-muted">{{ answer.date_posted.strftime('%d-%m-%Y') }}</small>
+          </div>
+          <p class="article-content text-justify text-wrap text-break text-muted ">{{ answer.content|safe }}</p> <hr>
+          <div class="footRow">
+            {%  if current_user.is_authenticated %}
+  
+              <a><i class="fas fa-thumbs-up mr-1 btn upvote" id="/AnswerUpvotes/{{answer.id}}/{{current_user.id}}" onclick="AnswerVotes(this);"> {{ answer.like_count }} </i></a>
+              <a><i class="fas fa-thumbs-down mr-1 btn" id="/AnswerDownvotes/{{answer.id}}/{{current_user.id}}" onclick="AnswerVotes(this);"> {{ answer.dislike_count }}</i></a>
+              <a href="#"><i class="fas fa-comment-alt mr-3 btn text-dark"></i></a>
+              <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-show-count="false"></a>
+
+              
+              {% else %}
+              <a href="#"><i class="fas fa-thumbs-up mr-1 btn text-primary upvote"><span class="ml-2 likes-count">{{ post.like_count }}</span></i></a>
+              <a href="#"><i class="fas fa-thumbs-down btn"><span id="demo" class="ml-3">{{ post.dislike_count }}</i></a>
+              <a href="#"><i class="fas fa-comment-alt mr-1 btn text-dark"></i></a>
+  
+            {% endif %}
+          </div>
+        </div>
+    </article>
+
+    <!-- Answer Comment Section -->
+    <div class="content-section hide-comments">
+      <form method="POST" action="">
+          {{ form.hidden_tag() }}
+
+              <div class="form-group">
+                  {{ form.comment.label(class="form-control-label") }}
+                  {% if form.comment.errors %}
+                      {{ form.comment(class="form-control form-control-lg is-invalid") }}
+                      <div class="invalid-feedback">
+                          {% for error in form.comment.errors %}
+                              <span>{{ error }}</span>
+                          {% endfor %}
+                      </div>
+                  {% else %}
+                      {{ form.comment(class="form-control form-control-lg") }}
+                  {% endif %}
+                  {{ form.submit(class="btn btn-outline-info") }}
+              </div>
+
+      </form> <hr>
+      {% for comment in comments %}
+        <article>
+            <div>
+              <p class="comment text-justify text-muted">{{ comment.comment }} <small>-  <a href="{{ url_for('user_posts', username=comment.author.username) }}">{{ comment.author.username }}</a> on {{ comment.date_posted.strftime('%d-%m-%Y') }} </small>
+            
+            </div><hr>
+            
+        </article>
+       {% endfor %}
+    </div>
+
+    <!-- Javascript Section -->
+    <script>
+        function contentDisp(obj) {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                var resp = JSON.parse(this.responseText);
+
+                this_id = String($(obj).attr("id"));
+                id_list = this_id.split('/')
+                if (id_list[1] == 'vote') {
+                    document.getElementById(String($(obj).attr("id"))).innerHTML = resp['vote_count'];
+                    id = '/downvote/' + id_list[2] + '/' + id_list[3];
+                    document.getElementById(id).innerHTML = resp['downvote_count'];
+                } else {
+                    document.getElementById(String($(obj).attr("id"))).innerHTML = resp['downvote_count'];
+                    id = '/vote/' + id_list[2] + '/' + id_list[3];
+                    document.getElementById(id).innerHTML = resp['vote_count'];
+                }
+            }
+        };
+        var someurl = String($(obj).attr("id"));
+        xhttp.open("GET", someurl, true);
+        xhttp.send();
+        }
+        function AnswerVotes(obj) {
+          var xhttp = new XMLHttpRequest();
+          xhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+              document.getElementById(String($(obj).attr("id"))).innerHTML =
+              this.responseText;
+            }
+          };
+          var someurl = String($(obj).attr("id"));
+          console.log(someurl)
+          xhttp.open("GET", someurl, true);
+          xhttp.send();
+        }
+     
+
+    </script>
+{% endblock content %}

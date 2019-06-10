@@ -29,6 +29,7 @@
                     
                   <a href="#commenticon"><i class="fas fa-comment-alt mr-1 btn text-dark" id="comment-btn"></i></a>
                   <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-show-count="false"></a>
+         
                   {% else %}
                   <a href="{{url_for('login')}}"><i class="fas fa-thumbs-up mr-1 btn text-primary upvote"><span class="ml-2 likes-count">{{ post.like_count }}</span></i></a>
                   <a href="{{url_for('login')}}"><i class="fas fa-thumbs-down mr-1 btn text-dark"><span id="demo" class="ml-3">{{ post.like_count }}</i></a>
@@ -36,7 +37,7 @@
     
                 {% endif %}
             </div>
-      </div>
+      </div> 
     </article>
 
     <!-- Modal Delete Post-->
@@ -84,51 +85,14 @@
 
 
 
-    <!-- Modal Delete Comment -->
-    {% for comment in comments %}
-      <div class="modal fade" id="deleteCommentModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel"    aria-hidden="true">
-        <div class="modal-dialog" role="document">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="deleteModalLabel">Delete Comment?</h5>
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-            
-            <form action="{{ url_for('delete_comment', post_id=post.id, comment_id= comment.comment_id) }}" method="P
-            OST">
-              <input class="btn btn-danger" type="submit" value="Delete">
-            </form>
-            
-            
-            </div>
-          </div>
-        </div>
-      </div>
-    {% endfor %}
-
+    
     <!-- Comment Section -->
     <div class="content-section hide-comments">
-        <form method="POST" action="">
-            {{ form.hidden_tag() }}
-
-                <div class="form-group">
-                    {{ form.comment.label(class="form-control-label") }}
-                    {% if form.comment.errors %}
-                        {{ form.comment(class="form-control form-control-lg is-invalid") }}
-                        <div class="invalid-feedback">
-                            {% for error in form.comment.errors %}
-                                <span>{{ error }}</span>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        {{ form.comment(class="form-control form-control-lg") }}
-                    {% endif %}
-                    {{ form.submit(class="btn btn-outline-info") }}
-                </div>
+        <form method="POST" id="comment-form" action="">
+          <div class="form-group">
+              <textarea class="form-control form-control-lg" id="comment-box" name="comment" required=""></textarea>
+              <button class="btn btn-outline-info" type="submit">Comment</button>
+          </div>
 
         </form> <hr>
         {% for comment in comments %}
@@ -137,7 +101,31 @@
                 <p class="comment text-justify text-muted">{{ comment.comment }} <small>-  <a href="{{ url_for('user_posts', username=comment.author.username) }}">{{ comment.author.username }}</a> on {{ comment.date_posted.strftime('%d-%m-%Y') }} </small>
                 
                 {% if post.author == current_user  %}
-                <a class=" ml-2 deleteComment-btn text-danger" data-toggle="modal" data-target="#deleteCommentModal"><i class="fas fa-trash-alt"></i></a></p>
+                <a class=" ml-2 deleteComment-btn text-danger" id="{{comment.comment_id}}"><i class="fas fa-trash-alt"></i></a></p>
+
+                <!-- Modal Delete Comment -->
+                <div class="modal fade" id="deleteCommentModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel"    aria-hidden="true">
+                  <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="deleteModalLabel">Delete Comment?</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                          <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                      
+                      <!-- <form action="{{ url_for('delete_comment', post_id=post.id, comment_id= comment.comment_id) }}" method="POST"> -->
+                      <button class="btn btn-danger" id="" onclick="deleteComment()">Delete</button>
+                      <!-- </form> -->
+                      
+                      
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {% else %}
               
                 {% endif %}
@@ -170,7 +158,7 @@
   
               <a><i class="fas fa-thumbs-up mr-1 btn upvote" id="/AnswerUpvotes/{{answer.id}}/{{current_user.id}}" onclick="AnswerVotes(this);"> {{ answer.like_count }} </i></a>
               <a><i class="fas fa-thumbs-down mr-1 btn" id="/AnswerDownvotes/{{answer.id}}/{{current_user.id}}" onclick="AnswerVotes(this);"> {{ answer.dislike_count }}</i></a>
-              <!-- <a href="#"><i class="fas fa-comment-alt mr-3 btn text-dark"></i></a> -->
+              <a href="{{ url_for('answercomment', answer_id=answer.id) }}"><i class="fas fa-comment-alt mr-3 btn text-dark"></i></a>
               <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-show-count="false"></a>
               {% else %}
               <a href="#"><i class="fas fa-thumbs-up mr-1 btn text-primary upvote"><span class="ml-2 likes-count">{{ post.like_count }}</span></i></a>
@@ -184,6 +172,7 @@
     {% endif %}
     {% endfor %}
 
+   
     <!-- Summernote Section -->
     <div class="summernote-section">
         <h4>Your Answer</h4>
@@ -195,6 +184,7 @@
     </div>
     <!-- Javascript Section -->
     <script>
+        var post_id ="";
         function contentDisp(obj) {
         var xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function() {
@@ -245,6 +235,33 @@
               $('.alert-success').hide();
           }, 1000);
         });
+     
+        $(function(){
+          $('a').click(function(){
+            $("#deleteCommentModal").modal();
+              
+              post_id = $(this).attr('id');
+              console.log(id)
+          })
+        });
 
+        function deleteComment(){
+          url = "comment/" + post_id + "/delete";
+          jQuery.post(url, function(data){
+            if (data){
+              window.location.reload();
+            }
+            else {
+              alert('Not Authorised!');
+            }
+          })
+        }
+
+        function clearComment(){
+          var cmnt = $('#comment-box').val();
+          console.log(cmnt);
+          $('#comment-form').submit();
+          //$("#comment-box").val('');
+        }
     </script>
 {% endblock content %}
