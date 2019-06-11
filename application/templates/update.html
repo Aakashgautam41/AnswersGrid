@@ -21,7 +21,9 @@
         {% for tags in taglist %}
         <option>{{tags['tag_title']}}</option>
         {% endfor %}
-    
+        {% for tag in tags %}
+        <option selected>{{tag}}</option>
+        {% endfor %}
         </select>
         <div id="tags-error-dialog"></div>
 

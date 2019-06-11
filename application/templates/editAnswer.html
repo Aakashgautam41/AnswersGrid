@@ -9,7 +9,7 @@
         </div><hr>
             <div class="mb-5">
                 <form action="{{ url_for('update_answer',answer_id=answer.id, post_id=post.id, ) }}" method="post">
-                        <button class="btn btn-primary editAnswer-btn">Post Your Answer</button> 
+                        <button class="btn btn-primary editAnswer-btn">Update Your Answer</button> 
                         <textarea id="summernote" name="editordata" class="mb-5" required>{{ answer.content|safe }}</textarea>
                         
                 </form>

@@ -9,26 +9,30 @@
             <small class="text-muted">{{ item.date_posted.strftime('%d-%m-%Y') }}</small>
             <div class="article-metadata">
             </div>
-            <h4><a class="article-title" href="{{ url_for('comment_post', post_id=item.id) }}">{{ item.title }}</a></h4>
+            <h4><a class="article-title" href="{{ url_for('comment_post', post_id=item.post_id) }}">{{ item.title }}</a></h4>
             <p class="article-content more text-justify text-muted">{{ item.content }}</p>
-            <p><a class="article-content tag-style" href="#">{{ item.tag_title }}</a></p><hr>
-
+            {% for x in list_of_all_post_tags %}
+              <a class="article-content tag-style" href="#">{{ x }}</a>
+            {% endfor %}
+            <hr>
             <div class="footRow">
                 {%  if current_user.is_authenticated %}
     
-                  <a><i class="fas fa-thumbs-up mr-1 btn upvote" id="/vote/{{item.id}}/{{current_user.id}}" onclick="contentDisp(this);">  {{ item.like_count }} </i></a>
+                  <a><i class="fas fa-thumbs-up mr-1 btn upvote" id="/vote/{{item.post_id}}/{{current_user.id}}" onclick="contentDisp(this);">  {{ item.like_count }} </i></a>
     
-                  <a><i class="fas fa-thumbs-down mr-1 btn upvote" id="/downvote/{{item.id}}/{{current_user.id}}" onclick="contentDisp(this);" >  {{ item.dislike_count }} </i></a>
+                  <a><i class="fas fa-thumbs-down mr-1 btn upvote" id="/downvote/{{item.post_id}}/{{current_user.id}}" onclick="contentDisp(this);" >  {{ item.dislike_count }} </i></a>
                     
-                  <a href="{{url_for('comment_post', post_id=item.id)}}"><i class="fas fa-comment-alt mr-1 btn text-dark"></i></a>
+                  <a href="{{url_for('comment_post', post_id=item.post_id)}}"><i class="fas fa-comment-alt mr-1 btn text-dark"></i></a>
 
-                  <a href="{{url_for('favourite_post', post_id=item.id)}}"><i class="fas fa-heart mr-1 btn"></i></a>
+                  <a href="{{url_for('favourite_post', post_id=item.post_id)}}"><i class="fas fa-heart mr-1 btn"></i></a>
 
-                  <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-show-count="false"></a>
+                 <!-- AddToAny BEGIN -->
+                 <a class="a2a_dd" href="https://www.addtoany.com/share"><i class="far fa-share-square btn"></i></a>
+                 <!-- AddToAny END -->
                   {% else %}
                   <a href="{{url_for('login')}}"><i class="fas fa-thumbs-up mr-1 btn text-primary upvote"><span class="ml-2 likes-count">{{ item.like_count }}</span></i></a>
-                  <a href="{{url_for('login')}}"><i class="fas fa-thumbs-down mr-1 btn text-dark"><span id="demo" class="ml-3">{{ item.like_count }}</i></a>
-                  <a href="{{url_for('comment_post', post_id=item.id)}}"><i class="fas fa-comment-alt mr-1 btn text-dark"></i></a>
+                  <a href="{{url_for('login')}}"><i class="fas fa-thumbs-down mr-1 btn text-dark"><span id="demo" class="ml-3">{{ item.dislike_count }}</i></a>
+                  <a href="{{url_for('comment_post', post_id=item.post_id)}}"><i class="fas fa-comment-alt mr-1 btn text-dark"></i></a>
     
                 {% endif %}
             </div>
@@ -60,6 +64,22 @@
         xhttp.open("GET", someurl, true);
         xhttp.send();
     }
+
+    $(document).ready(function(){
+      url = window.location.href;
+      key_list = url.split('/');
+      high_tag = key_list[4];
+      tags = document.querySelectorAll('a.tag-style');
+      for (var i=0; i<tags.length; i++){
+        if (tags[i].innerHTML == high_tag){
+          tags[i].setAttribute('style','background: #3a4e70; color: white;');
+        }
+        
+        console.log();
+      }
+      
+
+    });
       </script>
 
 {% endblock content %}

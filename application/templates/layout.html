@@ -12,7 +12,7 @@
     <link href="https://fonts.googleapis.com/css?family=Raleway|Roboto|Ubuntu" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
     <!-- include summernote css/js -->
-    <link href="http://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.11/summernote.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.11/summernote.css" rel="stylesheet">
 
     <!-- Select 2 js and css -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/css/select2.min.css" rel="stylesheet" />
@@ -39,6 +39,8 @@
       line-height: 1.5;
       font-family: Arial;
     }
+
+
     .form-check-input {
     position:relative;
     margin-top: .3rem;
@@ -363,8 +365,10 @@
           $(document).ready(function() {
             $('#summernote').summernote();
           });
+          var a2a_config = a2a_config || {};
+          a2a_config.onclick = 1;      
 
     </script>
-
+    <script async src="https://static.addtoany.com/menu/page.js"></script>
 </body>
 </html>

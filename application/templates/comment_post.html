@@ -28,7 +28,10 @@
                   <a><i class="fas fa-thumbs-down mr-1 btn upvote" id="/downvote/{{post.id}}/{{current_user.id}}" onclick="contentDisp(this);" >  {{ post.dislike_count }} </i></a>
 
                   <a href="#commenticon"><i class="fas fa-comment-alt mr-1 btn text-dark" id="comment-btn"></i></a>
-                  <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-show-count="false"></a>
+
+                  <!-- AddToAny BEGIN -->
+                  <a class="a2a_dd" href="https://www.addtoany.com/share"><i class="far fa-share-square btn"></i></a>
+                  <!-- AddToAny END -->
                   {% else %}
                   <a href="{{url_for('login')}}"><i class="fas fa-thumbs-up mr-1 btn text-primary upvote"><span class="ml-2 likes-count">{{ post.like_count }}</span></i></a>
                   <a href="{{url_for('login')}}"><i class="fas fa-thumbs-down mr-1 btn text-dark"><span id="demo" class="ml-3">{{ post.like_count }}</i></a>
@@ -60,33 +63,31 @@
       </div>
 
 
-    <!-- Modal Delete Answer-->
-    {% for answer in answers %}
-    <div class="modal fade" id="deleteAnswerModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="deleteModalLabel">Delete Answer?</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-            <form action="{{ url_for('delete_answer', answer_id=answer.id) }}" method="POST">
-              <input class="btn btn-danger" type="submit" value="Delete">
-            </form>
-          </div>
+  <!-- Modal Delete Answer-->
+  {% for answer in answers %}
+  <div class="modal fade" id="deleteAnswerModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteModalLabel">Delete Answer?</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button class="btn btn-danger" id="" onclick="deleteAnswer()">Delete</button>
         </div>
       </div>
     </div>
-    {% endfor %}
+  </div>
+  {% endfor %}
 
     <!-- Comment Section -->
     <div class="content-section hide-comments">
       <form method="POST" id="comment-form" action="">
         <div class="form-group">
-            <textarea class="form-control form-control-lg" id="comment-box" name="comment" required=""></textarea>
+            <textarea class="form-control form-control-lg" id="comment-box" name="comment" placeholder = "Type your comment..." required></textarea>
             <button class="btn btn-outline-info" type="submit">Comment</button>
         </div>
       </form> <hr>
@@ -106,10 +107,10 @@
                       <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                       </button>
-                  </div>
-                  <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button class="btn btn-danger" id="" onclick="deleteComment()">Delete</button>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                      <button class="btn btn-danger" id="" onclick="deleteComment()">Delete</button>
                     </div>
                   </div>
                 </div>
@@ -133,7 +134,7 @@
             {% if answer.author == current_user  %}
 
                 <a class="btn btn-secondary btn-sm mt-1 mb-1 edit-btn" href="{{ url_for('update_answer', answer_id=answer.id, post_id=post.id)  }}">Edit</a>
-                <button type="button" class="btn btn-danger btn-sm m-1 delete-btn" data-toggle="modal" data-target="#deleteAnswerModal">Delete</button>
+                <button type="button" class="btn btn-danger btn-sm m-1 delete-btn delete-answer" id="{{answer.id}}">Delete</button>
 
             {% endif %}
           </div>
@@ -147,7 +148,6 @@
 
               <a href="{{ url_for('answercomment', answer_id=answer.id) }}"><i class="fas fa-comment-alt mr-3 btn text-dark"></i></a>
 
-              <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-show-count="false"></a>
               {% else %}
               <a href="#"><i class="fas fa-thumbs-up mr-1 btn text-primary upvote"><span class="ml-2 likes-count">{{ post.like_count }}</span></i></a>
               <a href="#"><i class="fas fa-thumbs-down btn"><span id="demo" class="ml-3">{{ post.dislike_count }}</i></a>
@@ -197,12 +197,23 @@
         function AnswerVotes(obj) {
           var xhttp = new XMLHttpRequest();
           xhttp.onreadystatechange = function() {
-            if (this.readyState == 4 && this.status == 200) {
-              document.getElementById(String($(obj).attr("id"))).innerHTML = this.responseText;
-            }
+              if (this.readyState == 4 && this.status == 200) {
+                  var resp = JSON.parse(this.responseText);
+  
+                  this_id = String($(obj).attr("id"));
+                  id_list = this_id.split('/')
+                  if (id_list[1] == 'AnswerUpvotes') {
+                      document.getElementById(String($(obj).attr("id"))).innerHTML = resp['vote_count'];
+                      id = '/AnswerDownvotes/' + id_list[2] + '/' + id_list[3];
+                      document.getElementById(id).innerHTML = resp['downvote_count'];
+                  } else {
+                      document.getElementById(String($(obj).attr("id"))).innerHTML = resp['downvote_count'];
+                      id = '/AnswerUpvotes/' + id_list[2] + '/' + id_list[3];
+                      document.getElementById(id).innerHTML = resp['vote_count'];
+                  }
+              }
           };
           var someurl = String($(obj).attr("id"));
-          console.log(someurl)
           xhttp.open("GET", someurl, true);
           xhttp.send();
         }
@@ -221,11 +232,11 @@
           }, 1000);
         });
         $(function(){
-          $('a').click(function(){
+          $('.deleteComment-btn').click(function(){
             $("#deleteCommentModal").modal();
               
               post_id = $(this).attr('id');
-              console.log(id)
+              console.log(post_id)
           })
         });
 
@@ -233,7 +244,9 @@
           url = "comment/" + post_id + "/delete";
           jQuery.post(url, function(data){
             if (data){
-              window.location.reload();
+              let url_rep = window.location.href;
+              console.log(url_rep);
+              window.location.replace(url_rep);
             }
             else {
               alert('Not Authorised!');
@@ -245,7 +258,33 @@
           var cmnt = $('#comment-box').val();
           console.log(cmnt);
           $('#comment-form').submit();
-          //$("#comment-box").val('');
-        }
+          $("#comment-box").val('');
+       }
+      answer_id = "";
+      $(function(){
+        $('.delete-answer').click(function(){
+          $('#deleteAnswerModal').modal();
+              answer_id = $(this).attr('id');
+              console.log(answer_id)
+        })
+      });
+
+      function deleteAnswer(){
+        url = "/answer/" + answer_id + "/delete";
+        jQuery.post(url, function(data){
+          if (data){
+            let url = window.location.href;
+              console.log(url);
+              window.location.replace(url);
+          }
+          else {
+            alert('Not Authorised!');
+          }
+        })
+      }
+      
+        var a2a_config = a2a_config || {};
+        a2a_config.onclick = 1;      
     </script>
+    <script async src="https://static.addtoany.com/menu/page.js"></script>
 {% endblock content %}

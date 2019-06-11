@@ -374,12 +374,24 @@ def update_post(post_id):
         print("taglist: ", taglist)
 
         for tag in taglist:
-            something = tagposts(post_id=post_id, tag_id=tag)
-            db.session.add(something)
-            db.session.commit()
+            tag_in_tagposts = db.session.query(db.exists().where(and_(tagposts.post_id == post_id, tagposts.tag_id == tag))).scalar()
+            if not tag_in_tagposts:
+                something = tagposts(post_id=post_id, tag_id=tag)
+                db.session.add(something)
+                db.session.commit()
+
+        tagpost_post_rows = db.session.query(tagposts).filter_by(post_id=post_id).all()
+        already_in_tagpost = []
+        for x in tagpost_post_rows:
+            already_in_tagpost.append(x.tag_id)
+        print(already_in_tagpost)
+        for x in already_in_tagpost:
+            if x not in taglist:
+                delete_from_tagposts = tagposts.query.filter_by(tag_id=x).delete()
+                db.session.commit()
 
 
-            return redirect(url_for('comment_post', post_id=post_id))
+        return redirect(url_for('comment_post', post_id=post_id))
 
     # Populate form with current post data
     elif request.method == 'GET':
@@ -390,8 +402,23 @@ def update_post(post_id):
             taglist = dbase.execute(sql).fetchall()
         except Exception as e:
             print(e)
+        sql = 'select * from tagposts where post_id = {}'.format(post_id)
+        print('sql: ', sql)
+        try:
+            tagposts_rows = dbase.execute(sql).fetchall()
+            print('tagposts: ', tagposts)
+        except Exception as e:
+            print(str(e))
+        pre_tag_id = []
+        for x in tagposts_rows:
+            pre_tag_id.append(x['tag_id'])
+        tags = []
+        for y in taglist:
+            if y['tag_id'] in pre_tag_id:
+                tags.append(y['tag_title'])
 
-        return render_template('update.html', post=post_dict, joinedTables=joinedTables, title='Update Post', legend='Edit Your Question', taglist=taglist)
+        print(tags)
+        return render_template('update.html', post=post_dict, joinedTables=joinedTables, title='Update Post', legend='Edit Your Question', taglist=taglist, tags=tags)
 
 # ---------- Delete Post route ---------
 @app.route("/post/<int:post_id>/delete", methods=['POST'])
@@ -466,10 +493,24 @@ def comment_post(post_id):
 def search():
         page = request.args.get('page', 1, type=int)
         searched_content = request.form.get('search')
+        search_word_list = searched_content.split(" ")
+        print(search_word_list)
 
-        searched_posts = Post.query.filter(or_(Post.title.like('%'+searched_content+'%'),Post.content.like('%'+searched_content+'%'))).paginate(page=page, per_page=5)
+        # Join tables (tagposts, Tags and Post) to get tags for each post
+        joinedTables = db.session.query(tagposts.post_id,tagposts.tag_id,Tags.tag_title,Post.title,Post.user_id,Post.like_count,Post.content).join(Tags).join(Post).all()
+      
+        searched_posts = []
+        searched_post_a = []
+        for word in search_word_list:
 
-        return render_template('search.html', searched_posts=searched_posts)
+            searched_post_a = Post.query.filter(or_(Post.title.like('%'+word+'%'),Post.content.like('%'+searched_content+'%'))).all()
+            
+            for x in searched_post_a:
+                if x not in searched_posts:
+                    searched_posts.append(x)
+
+        print('searched: ', searched_posts)
+        return render_template('search.html', searched_posts=searched_posts, query=searched_content, joinedTables=joinedTables)
 
 # ---------- Upvote route ---------
 @app.route('/vote/<int:post_id>/<int:user_id>')
@@ -699,15 +740,23 @@ def tags(tag_title):
     tag_title = tag_title
 
     # Join tables (tagposts, Tags and Post) to get tags for each post
-    joinedTables = db.session.query(tagposts.post_id,tagposts.tag_id,Tags.tag_title,Post.title,Post.user_id,Post.like_count,Post.content,Post.id,Post.author,Post.date_posted,User.username,User.image_file).join(Tags).join(Post).join(User).all()
+    joinedTables = db.session.query(tagposts.post_id,tagposts.tag_id,Tags.tag_title,Post.title,Post.user_id,Post.like_count, Post.dislike_count,Post.content,Post.author,Post.date_posted,User.username,User.image_file).join(Tags).join(Post).join(User).all()
     # print(joinedTables)
 
+
     for item in joinedTables:
-        if tag_title in item.tag_title:
-            print(tag_title, item.post_id, item.title, item.user_id,  item.username, item.image_file)
+        if tag_title == item.tag_title:
+            tags_on_post = db.session.query(tagposts.post_id, tagposts.tag_id, Tags.tag_title).join(Tags).filter(tagposts.post_id==item.post_id).all()
+            print('tags: ', tags_on_post)
+            list_of_all_post_tags =  []
+            for a in tags_on_post:
 
 
-            return render_template("tags.html", posts=posts, joinedTables=joinedTables, tag_title=tag_title)
+                list_of_all_post_tags.append(a.tag_title)
+            # print('another: ',tag_title, item.post_id, item.title, item.user_id,  item.username, item.image_file)
+
+
+    return render_template("tags.html", posts=posts, joinedTables=joinedTables, tag_title=tag_title, list_of_all_post_tags=list_of_all_post_tags)
 
 # ---------- Delete Comment route ---------
 @app.route("/post/<post_id>/comment/<comment_id>/delete", methods=['POST'])
@@ -726,8 +775,8 @@ def delete_comment(post_id,comment_id):
                 return jsonify(False)
             db.session.delete(comment)
             db.session.commit()
-            # flash('Comment has been deleted', 'success')
-            return redirect(url_for('comment_post', post_id=post_id))
+            flash('Comment has been deleted', 'success')
+            return jsonify(True)
 
 # ---------- Answer route ---------
 @app.route("/answer/<int:post_id>", methods=['GET', 'POST'])
@@ -749,16 +798,17 @@ def answer(post_id):
 @app.route("/answer/<int:answer_id>/delete", methods=['POST'])
 @login_required
 def delete_answer(answer_id):
+    print(answer_id)
     answer = Answer.query.get_or_404(answer_id)
     post_id = answer.post_id
-    print(answer.author)
-    print(current_user)
+    print('and.auth', answer.author)
+    print('curr.user', current_user)
     if answer.author != current_user:
         abort(403)
     db.session.delete(answer)
     db.session.commit()
     flash('Your answer has been deleted', 'success')
-    return redirect(url_for('comment_post', post_id=post_id))
+    return jsonify(True)
 
 # ---------- Answer Comment route ---------
 @app.route("/answer/<int:answer_id>/comment", methods=['GET', 'POST'])
@@ -829,7 +879,14 @@ def answerLikes(answer_id,user_id):
         print(answers.like_count)
         print(answers)
         print("inside if")
-        return jsonify(db.session.query(Answerupvotes).filter(Answerupvotes.answer_id == answer_id).count())
+
+        upvote = db.session.query(Answerupvotes).filter(Answerupvotes.answer_id == answer_id).count()
+        downvote = db.session.query(Answerdownvotes).filter(Answerdownvotes.answer_id == answer_id).count()
+
+        vote_data = {'vote_count': upvote, 'downvote_count': downvote}
+        print('vote_data', vote_data)
+        return jsonify(vote_data)
+
 
         # If entry is not already present in the table
     elif post_inAnswerDownvote == True:
@@ -858,10 +915,13 @@ def answerLikes(answer_id,user_id):
         print(answers.like_count)
         print(answers)
         print("inside elif")
-        print(db.session.query(Answerdownvotes).filter(Answerdownvotes.answer_id == answer_id).count())
-        print(answers.dislike_count)
 
-        return jsonify(db.session.query(Answerupvotes).filter(Answerupvotes.answer_id == answer_id).count())
+        upvote = db.session.query(Answerupvotes).filter(Answerupvotes.answer_id == answer_id).count()
+        downvote = db.session.query(Answerdownvotes).filter(Answerdownvotes.answer_id == answer_id).count()
+
+        vote_data = {'vote_count': upvote, 'downvote_count': downvote}
+        print('vote_data', vote_data)
+        return jsonify(vote_data)
     else:
         # Then add entry in the table
         answerUpvotes = Answerupvotes(user_id=user_id, answer_id=answer_id)
@@ -880,7 +940,13 @@ def answerLikes(answer_id,user_id):
         print(answers.like_count)
         print(answers)
         print("inside else")
-        return jsonify(db.session.query(Answerupvotes).filter(Answerupvotes.answer_id == answer_id).count())
+
+        upvote = db.session.query(Answerupvotes).filter(Answerupvotes.answer_id == answer_id).count()
+        downvote = db.session.query(Answerdownvotes).filter(Answerdownvotes.answer_id == answer_id).count()
+
+        vote_data = {'vote_count': upvote, 'downvote_count': downvote}
+        print('vote_data', vote_data)
+        return jsonify(vote_data)
 
 # ---------- Answer Downvotes route ---------
 @app.route('/AnswerDownvotes/<int:answer_id>/<int:user_id>')
@@ -915,7 +981,13 @@ def answerDislikes(answer_id,user_id):
         print(answers.dislike_count)
         print(answers)
         print("inside if")
-        return jsonify(db.session.query(Answerdownvotes).filter(Answerdownvotes.answer_id == answer_id).count())
+        
+        upvote = db.session.query(Answerupvotes).filter(Answerupvotes.answer_id == answer_id).count()
+        downvote = db.session.query(Answerdownvotes).filter(Answerdownvotes.answer_id == answer_id).count()
+
+        vote_data = {'vote_count': upvote, 'downvote_count': downvote}
+        print('vote_data', vote_data)
+        return jsonify(vote_data)
 
         # If entry is not already present in the table
     elif post_inAnswerUpvote == True:
@@ -945,7 +1017,12 @@ def answerDislikes(answer_id,user_id):
         print(answers)
         print("inside elif")
 
-        return jsonify(db.session.query(Answerdownvotes).filter(Answerdownvotes.answer_id == answer_id).count())
+        upvote = db.session.query(Answerupvotes).filter(Answerupvotes.answer_id == answer_id).count()
+        downvote = db.session.query(Answerdownvotes).filter(Answerdownvotes.answer_id == answer_id).count()
+
+        vote_data = {'vote_count': upvote, 'downvote_count': downvote}
+        print('vote_data', vote_data)
+        return jsonify(vote_data)
     else:
         # Then add entry in the table
         answerDownvotes = Answerdownvotes(user_id=user_id, answer_id=answer_id)
@@ -964,7 +1041,13 @@ def answerDislikes(answer_id,user_id):
         print(answers.dislike_count)
         print(answers)
         print("inside else")
-        return jsonify(db.session.query(Answerdownvotes).filter(Answerdownvotes.answer_id == answer_id).count())
+
+        upvote = db.session.query(Answerupvotes).filter(Answerupvotes.answer_id == answer_id).count()
+        downvote = db.session.query(Answerdownvotes).filter(Answerdownvotes.answer_id == answer_id).count()
+
+        vote_data = {'vote_count': upvote, 'downvote_count': downvote}
+        print('vote_data', vote_data)
+        return jsonify(vote_data)
 
 # ---------- Answer Update  route ---------
 @app.route("/answer/<int:post_id>/<int:answer_id>/update", methods=['GET', 'POST'])

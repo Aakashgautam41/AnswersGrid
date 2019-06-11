@@ -31,7 +31,9 @@
 
             <a href="{{url_for('favourite_post', post_id=post.id)}}"><i class="fas fa-heart mr-1 btn"></i></a>
 
-            <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-show-count="false"></a>
+            <!-- AddToAny BEGIN -->
+            <a class="a2a_dd" href="https://www.addtoany.com/share"><i class="far fa-share-square btn"></i></a>
+            <!-- AddToAny END -->
 
             {% else %}
             <a href="{{url_for('login')}}"><i class="fas fa-thumbs-up mr-1 btn text-primary upvote"> {{ post.like_count }}</i></a>

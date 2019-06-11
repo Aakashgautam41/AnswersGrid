@@ -51,7 +51,7 @@ class Post(db.Model):
     favourites = db.relationship('Favourite', backref='favour_post', lazy=True)
 
     def __repr__(self):
-        return f"('{self.id}','{self.title}', '{self.date_posted}', '{self.like_count}')"
+        return f"('{self.id}','{self.title}', '{self.date_posted}', '{self.like_count}','{self.dislike_count}')"
 
 class Comment(db.Model):
     comment_id = db.Column(db.Integer, primary_key=True)
