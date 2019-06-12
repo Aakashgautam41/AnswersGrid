@@ -93,7 +93,37 @@
       </form> <hr>
       {% for comment in comments %}
             <div>
-              <p class="comment text-justify text-muted">{{ comment.comment }} <small>-  <a href="{{ url_for('user_posts', username=comment.author.username) }}">{{ comment.author.username }}</a> on {{ comment.date_posted.strftime('%d-%m-%Y') }} </small>
+              <p class="comment text-justify text-muted comment-field" ><span id="{{comment.comment_id}}">{{ comment.comment }}</span> <br>
+                <small class="move-right">-<a href="{{ url_for('user_posts', username=comment.author.username) }}">{{ comment.author.username }}</a> on {{ comment.date_posted.strftime('%d-%m-%Y') }} </small>
+
+              {% if comment.author == current_user %}
+              <!-- id="{{ url_for('updateComment', post_id=comment.post_id, comment_id= comment.comment_id) }}" -->
+              <a class="text-dark edit-comment edit-btn mr-4" id="{{comment.comment_id}}"> Edit</a>
+              <!-- Modal Edit Comment -->
+              <div class="modal fade" id="editCommentModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel"    aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="deleteModalLabel">Edit Comment?</h5>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                      </div>
+                      <div class="modal-body">
+                
+                          <form class="form form-group" id="update-comment" method="post" action="comment/{{comment.comment_id}}/update">
+                            <textarea class="form-control comment-area" name="comment"></textarea>
+                            <div style="text-align: right;">
+                              <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                              <button class="btn btn-primary" type="submit">Update</button>
+                            </div>
+                          </form>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              {% endif %}
           
               {% if post.author == current_user  %}
               <a class=" ml-2 deleteComment-btn text-danger" id="{{comment.comment_id}}"><i class="fas fa-trash-alt"></i></a></p>
@@ -117,7 +147,7 @@
               </div>
               {% else %}
               {% endif %}
-            </div><hr>
+            </div>
        {% endfor %}
     </div>
 
@@ -283,6 +313,17 @@
         })
       }
       
+      cmnt_update_url = '';
+      $(function(){
+        $('.edit-comment').click(function(){          
+          curr_url = window.location.href;
+          cmmnt_id = $(this).attr('id');
+          comment = $('#'+cmmnt_id).text();
+          $('.comment-area').html(comment);
+          $('#editCommentModal').modal();
+
+        });
+      });
         var a2a_config = a2a_config || {};
         a2a_config.onclick = 1;      
     </script>

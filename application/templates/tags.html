@@ -12,7 +12,7 @@
             <h4><a class="article-title" href="{{ url_for('comment_post', post_id=item.post_id) }}">{{ item.title }}</a></h4>
             <p class="article-content more text-justify text-muted">{{ item.content }}</p>
             {% for x in list_of_all_post_tags %}
-              <a class="article-content tag-style" href="#">{{ x }}</a>
+              <a class="article-content tag-style">{{ x }}</a>
             {% endfor %}
             <hr>
             <div class="footRow">
@@ -74,12 +74,17 @@
         if (tags[i].innerHTML == high_tag){
           tags[i].setAttribute('style','background: #3a4e70; color: white;');
         }
-        
-        console.log();
       }
-      
 
     });
+
+    $(function(){
+      $('.tag-style').click(function(){          
+        url = $(this).text();
+        window.location.replace(url);
+      })
+    });
+
       </script>
 
 {% endblock content %}

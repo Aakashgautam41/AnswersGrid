@@ -42,7 +42,7 @@ def create_connection(db_file):
 def home():
     page = request.args.get('page',1,type=int)
     posts = Post.query.order_by(Post.date_posted.desc()).paginate(page=page, per_page=5)
-
+    # print(Post.query.order_by(Post.date_posted.desc()).all())
 
     # Join tables (tagposts, Tags and Post) to get tags for each post
     joinedTables = db.session.query(tagposts.post_id,tagposts.tag_id,Tags.tag_title,Post.title,Post.user_id,Post.like_count,Post.content).join(Tags).join(Post).all()
@@ -132,7 +132,13 @@ def register():
         user = User(username=form.username.data, email=form.email.data, password=hashed_password)
         db.session.add(user)
         db.session.commit()
-        # flash('Your account has been created! You are now able to log in', 'success')
+
+        email = form.email.data
+        storedUser = db.session.query(User).filter(User.email==email).all()
+        print(storedUser)
+        send_verification_email(user)
+        flash('An email has been sent with instructions to verify your password.', 'info')
+       
 
 
         # API call
@@ -147,7 +153,7 @@ def register():
         params = {"uid": uid}
         response = req.post(furl,params=params)
         if str(response) == '<Response [200]>':
-            flash('Your account has been created! You are now able to log in', 'success')
+            # flash('Your account has been created! You are now able to log in', 'success')
             return redirect(url_for('login'))
         else:
             print('api call error')
@@ -192,6 +198,17 @@ If you did not make this request then simply ignore this email and no changes wi
 '''
     mail.send(msg)
 
+def send_verification_email(user):
+    token = user.get_reset_token()
+    msg = Message('Email verification',
+                  sender='noreply@demo.com',
+                  recipients=[user.email])
+    msg.body = f'''To verify your email, visit the following link:
+{url_for('verify_token', token=token, _external=True)}
+If you did not make this request then simply ignore this email and no changes will be made.
+'''
+    mail.send(msg)
+
 # ---------- Reset Password route ---------
 @app.route("/reset_password", methods=['GET', 'POST'])
 def reset_request():
@@ -223,6 +240,20 @@ def reset_token(token):
         return redirect(url_for('login'))
     return render_template('reset_token.html', title='Reset Passwords', form=form)
 
+# ---------- Verify Email Token route ---------
+@app.route("/verify_email/<token>", methods=['GET', 'POST'])
+def verify_token(token):
+    if current_user.is_authenticated:
+            return redirect(url_for('home'))
+    user = User.verify_reset_token(token)
+    if user is None:
+        flash('Invalid or Expired Token', 'warning')
+        return redirect(url_for('login'))
+    
+
+    flash('Your email has been verified', 'success')
+    return redirect(url_for('login'))
+    
 
 
 
@@ -399,25 +430,39 @@ def update_post(post_id):
         dbase = create_connection("site.db")
         sql = 'select * from Tags'
         try:
-            taglist = dbase.execute(sql).fetchall()
+            taglist_rows = dbase.execute(sql).fetchall()
         except Exception as e:
             print(e)
+        taglist = []
+        for x in taglist_rows:
+            taglist.append(x['tag_title'])
+        
         sql = 'select * from tagposts where post_id = {}'.format(post_id)
-        print('sql: ', sql)
         try:
             tagposts_rows = dbase.execute(sql).fetchall()
-            print('tagposts: ', tagposts)
         except Exception as e:
             print(str(e))
         pre_tag_id = []
         for x in tagposts_rows:
             pre_tag_id.append(x['tag_id'])
+        print('pre_tg: ', pre_tag_id)
         tags = []
-        for y in taglist:
+        for y in taglist_rows:
             if y['tag_id'] in pre_tag_id:
                 tags.append(y['tag_title'])
+        print('selected: ', tags)
+        print('all tags: ', taglist)
 
-        print(tags)
+        for x in tags:
+            print('next iteration', x)
+            if x in taglist:
+                print('x: ', x)
+                taglist.remove(x)
+
+
+
+        
+        
         return render_template('update.html', post=post_dict, joinedTables=joinedTables, title='Update Post', legend='Edit Your Question', taglist=taglist, tags=tags)
 
 # ---------- Delete Post route ---------
@@ -486,6 +531,23 @@ def comment_post(post_id):
     if request.method =='GET':
         comments = Comment.query.filter(Comment.post_id == post_id).order_by(Comment.date_posted.desc())
         return render_template('comment_post.html', title='Comments', post=post, comments=comments, joinedTables=joinedTables, answersCount=answersCount, answers=answers)
+
+# ---------- Edit Post Comment route ---------
+@app.route("/post/<int:post_id>/comment/<int:comment_id>/update", methods=['GET','POST'])
+@login_required
+def updateComment(post_id, comment_id):
+    comment = Comment.query.get_or_404(comment_id)
+    post_id = post_id
+    comment.comment = request.form.get('comment')
+    db.session.commit()
+   
+    comments = Comment.query.filter(Comment.post_id == post_id).order_by(Comment.date_posted.desc())
+    flash('Your comment has been updated', 'success')
+
+    return redirect(url_for('comment_post', post_id=post_id))
+
+
+
 
 
 # ---------- Search route ---------
