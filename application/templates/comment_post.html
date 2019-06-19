@@ -87,8 +87,8 @@
     <div class="content-section hide-comments">
       <form method="POST" id="comment-form" action="">
         <div class="form-group">
-            <textarea class="form-control form-control-lg" id="comment-box" name="comment" placeholder = "Type your comment..." required></textarea>
-            <button class="btn btn-outline-info" type="submit">Comment</button>
+            <textarea class="form-control form-control-lg" id="comment-box" name="comment" placeholder = "Type your comment..." required onkeyup="empty(this.value)"></textarea>
+            <button class="btn btn-outline-info" id="comment-button" disabled>Comment</button>
         </div>
       </form> <hr>
       {% for comment in comments %}
@@ -97,8 +97,8 @@
                 <small class="move-right">-<a href="{{ url_for('user_posts', username=comment.author.username) }}">{{ comment.author.username }}</a> on {{ comment.date_posted.strftime('%d-%m-%Y') }} </small>
 
               {% if comment.author == current_user %}
-              <!-- id="{{ url_for('updateComment', post_id=comment.post_id, comment_id= comment.comment_id) }}" -->
-              <a class="text-dark edit-comment edit-btn mr-4" id="{{comment.comment_id}}"> Edit</a>
+              <a class="text-dark edit-comment edit-btn mr-4" id="{{comment.comment_id}}"><i class="far fa-edit"></i></a>
+
               <!-- Modal Edit Comment -->
               <div class="modal fade" id="editCommentModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel"    aria-hidden="true">
                 <div class="modal-dialog" role="document">
@@ -111,11 +111,11 @@
                       </div>
                       <div class="modal-body">
                 
-                          <form class="form form-group" id="update-comment" method="post" action="comment/{{comment.comment_id}}/update">
+                          <form class="form form-group" id="update-comment" method="post">
                             <textarea class="form-control comment-area" name="comment"></textarea>
                             <div style="text-align: right;">
                               <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                              <button class="btn btn-primary" type="submit">Update</button>
+                              <button class="btn btn-primary" onclick="updateComment()">Update</button>
                             </div>
                           </form>
                       </div>
@@ -313,7 +313,7 @@
         })
       }
       
-      cmnt_update_url = '';
+      var cmmnt_id = '';
       $(function(){
         $('.edit-comment').click(function(){          
           curr_url = window.location.href;
@@ -324,6 +324,25 @@
 
         });
       });
+
+      function empty(commentText) {
+        var x;
+        x = commentText.trim();
+        if (x == "") {
+          $('#comment-button').attr('disabled', true);
+        }
+        else{
+          $('#comment-button').attr('disabled', false);
+        }
+      }
+
+      // UPDATE COMMENT
+      function updateComment() {
+        url = 'comment/' + cmmnt_id + '/update';
+        console.log(url);
+        $('#update-comment').attr('action', url);
+        $('#update-comment').submit();
+      }
         var a2a_config = a2a_config || {};
         a2a_config.onclick = 1;      
     </script>

@@ -7,13 +7,13 @@ from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     image_file = db.Column(db.String(20), nullable=False, default='default.jpg')
     password = db.Column(db.String(60), nullable=False)
+    verified = db.Column(db.Integer, nullable=False)
     posts = db.relationship('Post', backref='author', lazy=True)
     answers = db.relationship('Answer', backref="author", lazy=True)
     comments = db.relationship('Comment', backref='author', lazy=True)
@@ -82,7 +82,6 @@ class Downvote(db.Model):
     def __repr__(self):
         return f"Downvote('{self.user_id}', '{self.post_id}', '{self.action}')"
 
-
 class Tags(db.Model):
     tag_id = db.Column(db.Integer, primary_key=True, nullable=False)
     tag_title = db.Column(db.String,nullable=False)
@@ -91,7 +90,6 @@ class Tags(db.Model):
     def __repr__(self):
         return f"Tags('{self.tag_id}', '{self.tag_title}')"
 
-
 class tagposts(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
@@ -99,7 +97,6 @@ class tagposts(db.Model):
 
     def __repr__(self):
         return f"tagposts('{self.post_id}', '{self.tag_id}')"
-
 
 # Answers Models
 class Answer(db.Model):
@@ -126,6 +123,7 @@ class AnswerComment(db.Model):
 
     def __repr__(self):
         return f"AnswerComment('{self.comment}', '{self.date_posted}')"
+
 class Answerupvotes(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer,nullable=False)
@@ -143,8 +141,7 @@ class Answerdownvotes(db.Model):
 
     def __repr__(self):
         return f"Answerdownvotes('{self.user_id}', '{self.answer_id}', '{self.action}')"
-
-        
+    
 class Favourite(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)

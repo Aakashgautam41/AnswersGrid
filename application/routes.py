@@ -167,17 +167,19 @@ def register():
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('home'))
+
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
-        if user and bcrypt.check_password_hash(user.password, form.password.data):
+
+        if user and bcrypt.check_password_hash(user.password, form.password.data) and user.verified == 1:
             login_user(user, remember=form.remember.data)
             flash('You have been logged in!', 'success')
             next_page = request.args.get('next')
             return redirect(next_page) if next_page else redirect(url_for('home'))
             return redirect(url_for('home'))
         else:
-            flash('Login Unsuccessful. Please check email and password', 'danger')
+            flash('Login Unsuccessful. Please check email and password or verify your email', 'danger')
     return render_template('login.html', title='Login', form=form)
 
 # ---------- Logout route ---------
@@ -188,15 +190,19 @@ def logout():
     return redirect(url_for('home'))
 
 def send_reset_email(user):
-    token = user.get_reset_token()
-    msg = Message('Password Reset Request',
-                  sender='noreply@demo.com',
-                  recipients=[user.email])
-    msg.body = f'''To reset your password, visit the following link:
-{url_for('reset_token', token=token, _external=True)}
-If you did not make this request then simply ignore this email and no changes will be made.
-'''
-    mail.send(msg)
+    if user is None:
+        return redirect(url_for('login'))
+
+    else:   
+        token = user.get_reset_token()
+        msg = Message('Password Reset Request',
+                    sender='noreply@demo.com',
+                    recipients=[user.email])
+        msg.body = f'''To reset your password, visit the following link:
+    {url_for('reset_token', token=token, _external=True)}
+    If you did not make this request then simply ignore this email and no changes will be made.
+    '''
+        mail.send(msg)
 
 def send_verification_email(user):
     token = user.get_reset_token()
@@ -249,7 +255,9 @@ def verify_token(token):
     if user is None:
         flash('Invalid or Expired Token', 'warning')
         return redirect(url_for('login'))
-    
+
+    user.verified = 1
+    db.session.commit()
 
     flash('Your email has been verified', 'success')
     return redirect(url_for('login'))
@@ -293,7 +301,7 @@ def account():
 
     image_file = url_for('static', filename='profile_pics/'+ current_user.image_file)
     return render_template('account.html', title='Account', image_file=image_file, form=form)
-
+     
 # ---------- New Post route ---------
 @app.route("/post/new", methods=['GET', 'POST'])
 @login_required
@@ -802,23 +810,25 @@ def tags(tag_title):
     tag_title = tag_title
 
     # Join tables (tagposts, Tags and Post) to get tags for each post
-    joinedTables = db.session.query(tagposts.post_id,tagposts.tag_id,Tags.tag_title,Post.title,Post.user_id,Post.like_count, Post.dislike_count,Post.content,Post.author,Post.date_posted,User.username,User.image_file).join(Tags).join(Post).join(User).all()
-    # print(joinedTables)
+    joinedTables = db.session.query(tagposts.post_id,tagposts.tag_id,Tags.tag_title,Post.title,Post.id,Post.user_id,Post.like_count, Post.dislike_count,Post.content,Post.author,Post.date_posted,User.username,User.image_file).join(Tags).join(Post).join(User).all()
 
-
+    required_posts_and_tags = []
     for item in joinedTables:
         if tag_title == item.tag_title:
-            tags_on_post = db.session.query(tagposts.post_id, tagposts.tag_id, Tags.tag_title).join(Tags).filter(tagposts.post_id==item.post_id).all()
-            print('tags: ', tags_on_post)
-            list_of_all_post_tags =  []
+            post_ki_id = item.id
+            dbase = create_connection('site.db')
+            sql = 'SELECT tagposts.post_id AS tagposts_post_id, tagposts.tag_id AS tagposts_tag_id,\
+                tags.tag_title AS tags_tag_title FROM tagposts JOIN tags ON tags.tag_id = tagposts.tag_id WHERE \
+                tagposts.post_id ={}'.format(post_ki_id)
+            try:
+                tags_on_post = dbase.execute(sql).fetchall()
+            except Exception as e:
+                print(str(e)) 
+
             for a in tags_on_post:
+                required_posts_and_tags.append(a)
 
-
-                list_of_all_post_tags.append(a.tag_title)
-            # print('another: ',tag_title, item.post_id, item.title, item.user_id,  item.username, item.image_file)
-
-
-    return render_template("tags.html", posts=posts, joinedTables=joinedTables, tag_title=tag_title, list_of_all_post_tags=list_of_all_post_tags)
+    return render_template("tags.html", posts=posts, joinedTables=joinedTables, tag_title=tag_title, list_of_all_post_tags=required_posts_and_tags)
 
 # ---------- Delete Comment route ---------
 @app.route("/post/<post_id>/comment/<comment_id>/delete", methods=['POST'])
