@@ -1176,7 +1176,8 @@ def favourite():
     posts = Favourite.query.filter_by(current_user_id=current_user.id).order_by(Favourite.id.desc()).paginate(page=page, per_page=5)
 
     # Join tables (tagposts, Tags and Post) to get tags for each post
-    joinedTables = db.session.query(tagposts.post_id,tagposts.tag_id,Tags.tag_title,Post.title,Post.user_id,Post.like_count,Post.content,Post.id,Post.author,Post.date_posted,User.username,User.image_file, Favourite.post_id, Favourite.user_id).join(Tags).join(Post).join(User).join(Favourite).all()
+    # joinedTables = db.session.query(tagposts.post_id,tagposts.tag_id,Tags.tag_title,Post.title,Post.user_id,Post.like_count,Post.content,Post.id,Post.author,Post.date_posted,User.username,User.image_file, Favourite.post_id, Favourite.user_id).join(Tags).join(Post).join(User).join(Favourite).all()
+    joinedTables = db.session.query(tagposts.post_id,tagposts.tag_id,Tags.tag_title,Post.title,Post.user_id,Post.like_count,Post.content).join(Tags).join(Post).all()
     # print(joinedTables)
 
 

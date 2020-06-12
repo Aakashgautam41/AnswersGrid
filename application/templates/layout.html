@@ -270,7 +270,7 @@
 </head>
 <body>
     <header class="site-header">
-      <nav class="navbar navbar-expand-md navbar-dark fixed-top">
+      <nav class="navbar navbar-expand-md navbar-dark fixed-top" id="navbar">
         <div class="container">
           <a class="navbar-brand mr-4" href="/">AnswersGrid</a>
           <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggle" aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
@@ -389,6 +389,18 @@
           });
           var a2a_config = a2a_config || {};
           a2a_config.onclick = 1;
+
+        // Scrollbar effect
+        var prevScrollpos = window.pageYOffset;
+        window.onscroll = function() {
+        var currentScrollPos = window.pageYOffset;
+          if (prevScrollpos > currentScrollPos) {
+            document.getElementById("navbar").style.top = "0";
+          } else {
+            document.getElementById("navbar").style.top = "-60px";
+          }
+          prevScrollpos = currentScrollPos;
+        }
 
     </script>
     <script async src="https://static.addtoany.com/menu/page.js"></script>
