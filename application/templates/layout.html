@@ -48,13 +48,14 @@
     }
      .fa-searchBtn{
     margin-left: -44px;
-    background: #6d747c;
+    background: #192a56;
     padding: 7px;
     height:35px;
     padding-left: 15px;
     padding-right: -25px;
     border-radius: 2px;
     border: none;
+    display: none;
   }
 
   .form-control {
@@ -71,7 +72,8 @@
       transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
   }
   .navbar{
-      background: linear-gradient(to right, #4286f4, #373B44);
+      /* background: linear-gradient(to right, #4286f4, #373B44); */
+      background: #0097e6;
   }
   .search-btn{
     height: 2.2rem;
@@ -79,6 +81,10 @@
   }
  form .search-box {
     width: 20rem!important;
+    margin-left: 1rem;
+    border-radius: 1rem;
+    border: 1px solid #0097e6;
+    border-style: none;
   }
   img{
     display: inline;
@@ -202,9 +208,12 @@
     overflow: auto;
   }
   .nav-link:hover{
-    border-bottom: 2px solid #f82c68;
-    border-bottom-right-radius: 3px;
-    border-bottom-left-radius: 3px;
+    border-bottom: 2px solid #fff;
+    border-bottom-right-radius: 0px;
+    border-bottom-left-radius: 0px;
+  }
+  .site-header .navbar-nav .nav-link {
+    color: #fff;
   }
   .list-group-item:last-child {
     margin-bottom: 1px;
@@ -220,12 +229,23 @@
     .article-title {
     color: #595a60;
     }
-
+    .list-group-item:last-child {
+    margin-bottom: 0;
+    border-bottom-right-radius: 0rem;
+    border-bottom-left-radius: 0rem;
+  }
   @media screen and (max-width: 992px) {
+    form .search-box {
+    width: 20rem!important;
+    margin-left: 0rem;
+    border-radius: 1rem;
+    border: 1px solid #0097e6;
+    border-style: none;
+    }
     .nav-link:hover{
     border-bottom: none;
-    border-bottom-right-radius: 2px;
-    border-bottom-left-radius: 2px;
+    border-bottom-right-radius: 0px;
+    border-bottom-left-radius: 0px;
     }
     body {
       color: #2e2626;
@@ -263,16 +283,16 @@
               <!-- <a class="nav-item nav-link" href="{{ url_for('personal') }}">Local Feed</a> -->
               <a class="nav-item nav-link" href="{{ url_for('favourite') }}">Favourites</a>
               {% endif %}
-
+              <form method="POST" action="/search" class="form-inline my-2 my-lg-0 form-group">
+                <input class="form-control mr-sm-2 search-box" type="search" placeholder="Search your question :/" name="search" aria-label="Search">
+                <button class="btn text-white mr-2 fa-searchBtn" type="submit"><i class="fas fa-search"></i></button>
+              </form>
             </div>
-            <form method="POST" action="/search" class="form-inline my-2 my-lg-0 form-group">
-              <input class="form-control mr-sm-2 search-box" type="search" placeholder="Search your question :/" name="search" aria-label="Search">
-              <button class="btn bg-secondary text-white mr-2 fa-searchBtn" type="submit"><i class="fas fa-search"></i></button>
-             </form>
+           
             <!-- Navbar Right Side -->
             <div class="navbar-nav">
               {%  if current_user.is_authenticated %}
-              <a class="nav-item nav-link" href="{{ url_for('new_post') }}">Add Question</a>
+              <a class="nav-item nav-link" href="{{ url_for('new_post') }}">Ask Question</a>
               <a class="nav-item nav-link" href="{{ url_for('account') }}">Account</a>
               <a class="nav-item nav-link" href="{{ url_for('logout') }}">Logout</a>
               {% else  %}

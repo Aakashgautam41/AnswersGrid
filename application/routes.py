@@ -78,7 +78,9 @@ def home():
                 return render_template('home.html', posts=posts, joinedTables=joinedTables, recommended_items=recommended_items)
         else:
             print(response)
-            return jsonify("error")
+            # return jsonify("error")
+            return render_template('home.html', posts=posts, recommended_items=recommended_items_default, joinedTables=joinedTables)
+
 
     else:
         return render_template('home.html', posts=posts, recommended_items=recommended_items_default, joinedTables=joinedTables)
